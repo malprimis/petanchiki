@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import DeclarativeBase, mapped_column
 from sqlalchemy.types import UUID
 
-intpk = Annotated[int, mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)]
+intpk = Annotated[UUID, mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)]
 intpkdef = Annotated[int, mapped_column(primary_key=True)]
 created_at = Annotated[datetime.datetime, mapped_column(server_default=text("TIMEZONE('utc', now())"))]
 updated_at = Annotated[datetime.datetime, mapped_column(server_default=text("TIMEZONE('utc', now())"),

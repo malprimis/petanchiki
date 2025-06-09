@@ -1,0 +1,20 @@
+# Enviroments
+backend/.env
+
+# Python envs
+backend/.venv/
+frontend/.venv/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# IDE
+.idea/
+.vscode/
+
+# Логи, sqlite, pycache
+**/__pycache__/
+**/*.py[cod]
+*.sqlite3
+*.log

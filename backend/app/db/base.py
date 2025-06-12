@@ -26,6 +26,16 @@ class Base(DeclarativeBase):
         return f'<{self.__class__.__name__}: {', '.join(cols)}>'
 
 
-class Role(enum.Enum):
+class UserRole(enum.Enum):
     admin = 'admin'
     user = 'user'
+
+
+class GroupRole(enum.Enum):
+    admin  = "admin"
+    member = "member"
+
+
+class TransactionType(enum.Enum):
+    expense = 'expense'
+    income = 'income'

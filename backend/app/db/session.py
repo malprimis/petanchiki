@@ -6,4 +6,4 @@ async_engine = create_async_engine(
     url=settings.database_url_asyncpg
 )
 
-async_sesion_factory = async_sessionmaker(async_engine)
+async_sesion_factory: async_sessionmaker[AsyncSession] = async_sessionmaker(async_engine)

@@ -1,22 +1,22 @@
 import datetime
+import uuid
 
-from ..models import (
-    intpk, created_at, updated_at, Base, Numeric, relationship, Group, Category, User,
-    mapped_column, Mapped, UUID, ForeignKey, TransactionType
-)
+import sqlalchemy as sa
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.db.base import Base, intpk, created_at, updated_at, TransactionType
 
 
 class Transaction(Base):
     __tablename__ = 'transactions'
 
     id:  Mapped[intpk]
-    group_id: Mapped[UUID] = mapped_column(ForeignKey('groups.id'))
-    category_id: Mapped[UUID] = mapped_column(ForeignKey('categories.id'))
-    user_id: Mapped[UUID] = mapped_column(ForeignKey('users.id'))
-    amount: Mapped[float] = mapped_column(Numeric(precision=12, scale=2))
+    group_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('groups.id'))
+    category_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('categories.id'))
+    user_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('users.id'))
+    amount: Mapped[float] = mapped_column(sa.Numeric(precision=12, scale=2))
     type: Mapped[TransactionType]
-    description: Mapped[str | float]
+    description: Mapped[str | None]
     date: Mapped[datetime.datetime]
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]

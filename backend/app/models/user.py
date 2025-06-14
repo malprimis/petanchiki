@@ -1,3 +1,5 @@
+import datetime
+
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -14,6 +16,8 @@ class User(Base):
     role: Mapped[UserRole]
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, default=True, nullable=False)
+    deleted_at: Mapped[datetime.datetime | None] = mapped_column(sa.DateTime, nullable=True)
 
     user_groups: Mapped[list["UserGroup"]] = relationship(
         "UserGroup",
@@ -38,3 +42,7 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+
+    @property
+    def is_admin(self):
+        return self.role == UserRole.admin

@@ -13,7 +13,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(sa.String(255), unique=True)
     name: Mapped[str] = mapped_column(sa.String(30))
     password_hash: Mapped[str] = mapped_column(sa.String(255))
-    role: Mapped[UserRole]
+    role: Mapped[UserRole] = mapped_column(default=UserRole.user, server_default=UserRole.user.value)
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
     is_active: Mapped[bool] = mapped_column(sa.Boolean, default=True, nullable=False)

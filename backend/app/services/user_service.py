@@ -24,12 +24,12 @@ async def create_user(db: AsyncSession, user: UserCreate) -> User:
 
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
-    result = await db.execute(select(User).filter(User.email == email))
+    result = await db.execute(select(User).filter(User.email == email, User.is_active == True))
     return result.scalars().first()
 
 
 async def get_user_by_id(db: AsyncSession, id: uuid.UUID) -> User | None:
-    result = await db.execute(select(User).filter(User.id == id))
+    result = await db.execute(select(User).filter(User.id == id, User.is_active == True))
     return result.scalars().first()
 
 

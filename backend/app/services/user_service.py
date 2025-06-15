@@ -6,6 +6,7 @@ from typing import Sequence
 
 from fastapi import HTTPException
 from passlib.context import CryptContext
+from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -64,7 +65,7 @@ async def create_user(
 
 async def get_user_by_email(
         db: AsyncSession,
-        email: str
+        email: str | EmailStr
 ) -> User | None:
     """Return the *active* user whose e‑mail matches ``email``.
 

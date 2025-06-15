@@ -1,7 +1,8 @@
 import pytest
 import pytest_asyncio
-import asyncio
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+
 from app.models.user import Base, User
 from app.schemas.user import UserCreate, UserUpdate
 from app.services.user_service import (
@@ -11,7 +12,6 @@ from app.services.user_service import (
     update_user,
     delete_user,
 )
-from sqlalchemy import select
 
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 engine = create_async_engine(DATABASE_URL, echo=False)

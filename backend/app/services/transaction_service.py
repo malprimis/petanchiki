@@ -1,17 +1,14 @@
 import uuid
-from uuid import UUID
 from datetime import datetime
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 from fastapi import HTTPException
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from unicodedata import category
-from watchfiles import awatch
 
 from app.db.base import TransactionType
-from app.models.transaction import Transaction
 from app.models.category import Category
+from app.models.transaction import Transaction
 from app.models.user_group import UserGroup
 from app.schemas.transaction import TransactionCreate, TransactionUpdate
 from app.services.group_service import is_user_admin_in_group
@@ -117,7 +114,7 @@ async def update_transaction(
         tx_in: TransactionUpdate,
         current_user_id: uuid.UUID
 ) -> Transaction:
-    if await check_transaction_permission(db, tx, current_user_id):
+    if not await check_transaction_permission(db, tx, current_user_id):
         raise HTTPException(status_code=403, detail='forbidden')
 
     updated = False

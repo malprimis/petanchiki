@@ -1,14 +1,12 @@
 import pytest
 import pytest_asyncio
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
 from app.db.base import Base, GroupRole
 from app.models.user_group import UserGroup
-from app.schemas.user import UserCreate
 from app.schemas.group import GroupCreate, GroupUpdate
-from app.services.user_service import create_user
+from app.schemas.user import UserCreate
 from app.services.group_service import (
     create_group,
     get_group_by_id,
@@ -22,6 +20,7 @@ from app.services.group_service import (
     is_user_admin_in_group,
     is_user_member_in_group,
 )
+from app.services.user_service import create_user
 
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 engine = create_async_engine(DATABASE_URL, echo=False)

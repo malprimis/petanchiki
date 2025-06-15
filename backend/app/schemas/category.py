@@ -17,3 +17,7 @@ class CategoryRead(CategoryBase):
     id: uuid.UUID
     group_id: uuid.UUID
     created_at: datetime
+
+class CategoryUpdate(BaseModel):
+    name: str | None = None
+    icon: str | None = None

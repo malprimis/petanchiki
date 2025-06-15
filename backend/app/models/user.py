@@ -16,8 +16,8 @@ class User(Base):
     role: Mapped[UserRole] = mapped_column(default=UserRole.user, server_default=UserRole.user.value)
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
-    is_active: Mapped[bool] = mapped_column(sa.Boolean, default=True, nullable=False)
-    deleted_at: Mapped[datetime.datetime | None] = mapped_column(sa.DateTime, nullable=True)
+    is_active: Mapped[bool] = mapped_column(default=True, server_default=sa.text('true'))
+    deleted_at: Mapped[datetime.datetime | None]
 
     user_groups: Mapped[list["UserGroup"]] = relationship(
         "UserGroup",

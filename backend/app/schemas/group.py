@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from app.db.base import GroupRole
-from user import UserRead
+from app.schemas.user import UserRead
 
 
 class GroupBase(BaseModel):
@@ -22,6 +22,8 @@ class GroupRead(GroupBase):
     created_at: datetime
     updated_at: datetime
     members: list['UserRead']
+    is_active: bool
+    deleted_at: datetime | None = None
 
 
 class GroupUpdate(BaseModel):

@@ -17,7 +17,7 @@ class Transaction(Base):
     amount: Mapped[float] = mapped_column(sa.Numeric(precision=12, scale=2))
     type: Mapped[TransactionType]
     description: Mapped[str | None]
-    date: Mapped[datetime.datetime]
+    date: Mapped[datetime.datetime | None]
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
 

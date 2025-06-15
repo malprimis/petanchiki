@@ -25,7 +25,10 @@ __all__ = [
 pwd_context: CryptContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-async def create_user(db: AsyncSession, user: UserCreate) -> User:
+async def create_user(
+        db: AsyncSession,
+        user: UserCreate
+) -> User:
     """Persist a new **active** user with a securely hashed password.
 
     Parameters
@@ -59,7 +62,10 @@ async def create_user(db: AsyncSession, user: UserCreate) -> User:
     return user
 
 
-async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
+async def get_user_by_email(
+        db: AsyncSession,
+        email: str
+) -> User | None:
     """Return the *active* user whose e‑mail matches ``email``.
 
     Parameters
@@ -81,7 +87,10 @@ async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     return result.scalars().first()
 
 
-async def get_user_by_id(db: AsyncSession, id: uuid.UUID) -> User | None:
+async def get_user_by_id(
+        db: AsyncSession,
+        id: uuid.UUID
+) -> User | None:
     """Retrieve an *active* user by primary key.
 
     Parameters
@@ -161,7 +170,11 @@ async def update_user(
     return user
 
 
-async def delete_user(db: AsyncSession, user: User, current_user: User) -> None:
+async def delete_user(
+        db: AsyncSession,
+        user: User,
+        current_user: User
+) -> None:
     """Soft‑delete a user (``is_active=False`` + tombstone timestamp).
 
     Authorisation matrix mirrors `update_user` – self‑deleting or

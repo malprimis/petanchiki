@@ -22,7 +22,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas
 
-
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
 
 # Убедись, что директория существует
 REPORTS_DIR = Path("reports")

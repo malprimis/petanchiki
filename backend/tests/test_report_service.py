@@ -5,7 +5,7 @@ import pytest_asyncio
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import Path
+from pathlib import Path
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
 from app.db.base import Base, TransactionType

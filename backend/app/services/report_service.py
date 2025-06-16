@@ -1,10 +1,4 @@
 import os
-
-
-
-
-
-
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -26,18 +20,16 @@ REPORTS_DIR = os.getenv("REPORTS_DIR", "reports")
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
 
+# report_service.py
+
 async def generate_report_data(
     db: AsyncSession,
     req: ReportRequest
 ) -> dict[str, Any]:
     """
-    Возвращает словарь с ключами:
-      - income_total: float
-      - expense_total: float
-      - by_category: dict[name, sum] (если req.by_category)
-      - by_user: dict[name, sum]     (если req.by_user)
+    Возвращает словарь с данными отчёта.
     """
-    # 1) Считаем общий доход
+    # --- Доходы ---
     income_res = await db.execute(
         select(func.coalesce(func.sum(Transaction.amount), 0.0))
         .where(
@@ -49,7 +41,7 @@ async def generate_report_data(
     )
     total_income = income_res.scalar_one()
 
-    # 2) Считаем общий расход
+    # --- Расходы ---
     expense_res = await db.execute(
         select(func.coalesce(func.sum(Transaction.amount), 0.0))
         .where(
@@ -61,55 +53,80 @@ async def generate_report_data(
     )
     total_expense = expense_res.scalar_one()
 
-    # 3) Разбивка по категориям
+    balance = total_income - total_expense
+
+    # --- Транзакции ---
+    stmt = (
+        select(Transaction)
+        .where(
+            Transaction.group_id == req.group_id,
+            *([Transaction.date >= req.date_from] if req.date_from else []),
+            *([Transaction.date <= req.date_to] if req.date_to else []),
+        )
+    )
+    result = await db.execute(stmt)
+    transactions = result.scalars().all()
+
+    # --- Разбивка по категориям ---
     by_cat: Optional[dict[str, float]] = None
     if req.by_category:
-        stmt = (
-            select(Transaction.category_id, func.coalesce(func.sum(Transaction.amount), 0.0))
+        cat_stmt = (
+            select(Transaction.category_id, func.sum(Transaction.amount).cast(func.Numeric(10, 2)))
             .where(
                 Transaction.group_id == req.group_id,
                 *([Transaction.date >= req.date_from] if req.date_from else []),
-                *([Transaction.date <= req.date_to]   if req.date_to   else []),
+                *([Transaction.date <= req.date_to] if req.date_to else []),
             )
             .group_by(Transaction.category_id)
         )
-        rows = await db.execute(stmt)
+        cat_result = await db.execute(cat_stmt)
+        categories = cat_result.all()
         by_cat = {}
-        for cat_id, amt in rows.all():
-            cat = await get_category_by_id(db, cat_id)
-            if cat:
-                by_cat[cat.name] = amt
+        for cat_id, amt in categories:
+            category = await get_category_by_id(db, cat_id)
+            if category:
+                by_cat[category.name] = float(amt)
 
-    # 4) Разбивка по пользователям
+    # --- Разбивка по пользователям ---
     by_usr: Optional[dict[str, float]] = None
     if req.by_user:
-        stmt = (
-            select(Transaction.user_id, func.coalesce(func.sum(Transaction.amount), 0.0))
+        user_stmt = (
+            select(Transaction.user_id, func.sum(Transaction.amount).cast(func.Numeric(10, 2)))
             .where(
                 Transaction.group_id == req.group_id,
                 *([Transaction.date >= req.date_from] if req.date_from else []),
-                *([Transaction.date <= req.date_to]   if req.date_to   else []),
+                *([Transaction.date <= req.date_to] if req.date_to else []),
             )
             .group_by(Transaction.user_id)
         )
-        rows = await db.execute(stmt)
+        user_result = await db.execute(user_stmt)
+        users = user_result.all()
         by_usr = {}
-        for user_id, amt in rows.all():
+        for user_id, amt in users:
             user = await get_user_by_id(db, user_id)
             if user:
-                by_usr[user.name] = amt
+                by_usr[user.name] = float(amt)
 
-    # Собираем итоговый словарь
-    result: dict[str, Any] = {
-        "income_total": total_income,
-        "expense_total": total_expense,
+    # --- Собираем результат ---
+    return {
+        "income_total": float(total_income),
+        "expense_total": float(total_expense),
+        "balance": float(balance),
+        "transactions": [
+            {
+                "id": str(tx.id),
+                "amount": float(tx.amount),
+                "type": tx.type.value,
+                "description": tx.description,
+                "date": tx.date.isoformat() if tx.date else None,
+                "user_id": str(tx.user_id),
+                "category_id": str(tx.category_id),
+            }
+            for tx in transactions
+        ],
+        "by_category": by_cat or {},
+        "by_user": by_usr or {},
     }
-    if req.by_category:
-        result["by_category"] = by_cat or {}
-    if req.by_user:
-        result["by_user"] = by_usr or {}
-    return result
-
 
 async def generate_report_pdf(
     db: AsyncSession,

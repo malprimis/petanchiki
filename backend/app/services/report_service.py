@@ -1,6 +1,9 @@
 # app/services/report_service.py
 import os
 import uuid
+import matplotlib.pyplot as plt
+from io import BytesIO
+from reportlab.lib.utils import ImageReader
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
@@ -18,6 +21,7 @@ from app.services.category_service import get_category_by_id
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas
+
 
 
 # Убедись, что директория существует
@@ -143,6 +147,35 @@ REPORTS_DIR = Path("reports")
 REPORTS_DIR.mkdir(exist_ok=True)
 
 
+def generate_category_pie_chart(data: dict) -> ImageReader:
+    """
+    Создаёт круговую диаграмму расходов по категориям и возвращает как ImageReader.
+    """
+    if not data:
+        raise ValueError("Нет данных для построения диаграммы")
+
+    labels = list(data.keys())
+    sizes = list(data.values())
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    ax.pie(
+        sizes,
+        labels=labels,
+        autopct='%1.1f%%',
+        startangle=90,
+        textprops={'fontname': 'DejaVu Sans', 'fontsize': 10}
+    )
+    ax.axis('equal')  # Для круглой формы диаграммы
+    plt.title("Распределение расходов по категориям")
+
+    # Сохраняем изображение в буфер
+    img_data = BytesIO()
+    plt.savefig(img_data, format='png')
+    plt.close()
+
+    # Возвращаем как ImageReader для ReportLab
+    return ImageReader(BytesIO(img_data.getvalue()))
+
 async def generate_report_pdf(
     db: AsyncSession,
     req: ReportRequest
@@ -204,6 +237,12 @@ async def generate_report_pdf(
     summary_table.wrapOn(c, width, height)
     summary_table.drawOn(c, 2 * cm, y)
     y -= 2 * cm
+
+    # Рисуем диаграмму
+    if data["by_category"]:
+        img_reader = generate_category_pie_chart(data["by_category"])
+        c.drawImage(img_reader, 2 * cm, y - 8 * cm, width=12 * cm, height=8 * cm)
+        y -= 9 * cm
 
     # --- Таблица по категориям ---
     if data["by_category"]:

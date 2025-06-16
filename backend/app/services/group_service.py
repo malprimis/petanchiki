@@ -10,7 +10,7 @@ from app.db.base import GroupRole
 from app.models.group import Group
 from app.models.user import User
 from app.models.user_group import UserGroup
-from app.schemas.group import GroupCreate
+from app.schemas.group import GroupCreate, GroupUpdate
 
 
 async def create_group(
@@ -143,7 +143,7 @@ async def list_group_by_user(
 async def update_group(
         db: AsyncSession,
         group: Group,
-        group_in: Group,
+        group_in: GroupUpdate,
         current_user: User
 ) -> Group:
     """Modify mutable attributes (``name``, ``description``) of a group.

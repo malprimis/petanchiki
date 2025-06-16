@@ -1,10 +1,9 @@
 from uuid import UUID
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from watchfiles import awatch
 
+from app.db.base import GroupRole
 from app.db.session import get_db
 from app.services.group_service import (
     create_group,
@@ -95,4 +94,87 @@ async def update_group(
     if not group:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Group not found')
 
-    updated = await svc_update_group(db, group)
+    updated = await svc_update_group(db, group, group_in, current_user)
+    return updated
+
+
+@router.delete(
+    '/{group_id}',
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary='Delete (deactivate) group'
+)
+async def delete_group(
+        group_id: UUID,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserModel = Depends(get_current_user)
+):
+    group = await svc_get_group(db, group_id)
+    if not group:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Group not found')
+
+    await svc_delete_group(db, group, current_user)
+    return None
+
+
+@router.post(
+    '/{group_id}/members',
+    response_model=UserGroupRead,
+    status_code=status.HTTP_201_CREATED,
+    summary='Add member to group'
+)
+async def add_member(
+        group_id: UUID,
+        user_id: UUID,
+        role: GroupRole = GroupRole.member,
+        db: AsyncSession = Depends(get_db),
+):
+    membership = await svc_add_user(db, group_id, user_id, role)
+    return membership
+
+
+@router.get(
+    '/{group_id}/members',
+    response_model=list[UserGroupRead],
+    summary='List all group members'
+)
+async def list_members(
+        group_id: UUID,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserModel = Depends(get_current_user)
+):
+    members = await svc_list_members(db, group_id)
+    if not any(m.user_id == current_user.id for m in members):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Not a group member')
+    return members
+
+
+@router.patch(
+    '/{group_id}/members/{user_id}',
+    response_model=UserGroupRead,
+    summary="Change member's role"
+)
+async def change_member_role(
+        group_id: UUID,
+        user_id: UUID,
+        new_role: GroupRole,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserModel = Depends(get_current_user)
+):
+    membership = await svc_change_role(db, group_id, user_id, new_role, current_user)
+
+    return membership
+
+
+@router.delete(
+    '/{group_id}/members/{user_id}',
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary='Remove a member from group'
+)
+async def remove_member(
+        group_id: UUID,
+        user_id: UUID,
+        db: AsyncSession = Depends(get_db),
+        current_user: UserModel = Depends(get_current_user)
+):
+    await svc_remove_user(db, group_id, user_id, current_user)
+    return None

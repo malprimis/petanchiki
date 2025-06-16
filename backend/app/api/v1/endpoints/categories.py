@@ -29,3 +29,5 @@ router = APIRouter(
     status_code=status.HTTP_201_CREATED,
     summary="Create a new category in a group",
 )
+async def create_category():
+    pass

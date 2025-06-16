@@ -2,11 +2,13 @@
 
 import pytest
 import pytest_asyncio
+from datetime import datetime
 from uuid import UUID
 
+from fastapi import Path
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
-from app.db.base import Base
+from app.db.base import Base, TransactionType
 from app.schemas.user import UserCreate
 from app.schemas.group import GroupCreate
 from app.schemas.category import CategoryCreate
@@ -43,7 +45,7 @@ async def test_generate_report_data(async_session: AsyncSession):
         group_id=group.id,
         category_id=category.id,
         amount=1000,
-        type="income",
+        type=TransactionType.income,
         description="Зарплата",
         date=datetime(2025, 1, 1)
     ), author_id=user.id)
@@ -52,7 +54,7 @@ async def test_generate_report_data(async_session: AsyncSession):
         group_id=group.id,
         category_id=category.id,
         amount=500,
-        type="expense",
+        type=TransactionType.expense,
         description="Обед",
         date=datetime(2025, 1, 2)
     ), author_id=user.id)
@@ -76,7 +78,7 @@ async def test_generate_report_pdf(async_session: AsyncSession):
         group_id=group.id,
         category_id=category.id,
         amount=100,
-        type="expense",
+        type=TransactionType.expense,
         description="Проезд",
         date=datetime(2025, 1, 1)
     ), author_id=user.id)

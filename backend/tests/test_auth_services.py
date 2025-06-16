@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker

@@ -38,7 +38,7 @@ class Base(DeclarativeBase):
             if col in self.repr_cols or idx < self.repr_cols_num:
                 cols.append(f'{col} = {getattr(self, col)}')
 
-        return f'<{self.__class__.__name__}: {', '.join(cols)}>'
+        return f'<{self.__class__.__name__}: {", ".join(cols)}>'
 
 
 class UserRole(enum.Enum):

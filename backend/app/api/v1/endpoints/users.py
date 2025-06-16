@@ -1,26 +1,23 @@
 from uuid import UUID
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from watchfiles import awatch
 
 from app.db.session import get_db
-from app.services.user_service import (
-    create_user,
-    svc_get_user as svc_get_user,
-    list_users,
-    update_user,
-    delete_user,
-)
+from app.models.user import User as UserModel
 from app.schemas.user import (
     UserCreate,
     UserRead,
     UserUpdate
 )
-from app.services.auth_service import get_current_user
-from app.models.user import User as UserModel
-
+from app.core.security import get_current_active_user, get_current_active_admin
+from app.services.user_service import (
+    create_user,
+    get_user_by_id as svc_get_user,
+    list_users,
+    update_user,
+    delete_user,
+)
 
 router = APIRouter(
     prefix="/users",
@@ -49,7 +46,7 @@ async def create_user_endpoint(
 )
 async def list_users_endpoint(
     db: AsyncSession = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_active_admin)
 ):
     if not current_user.is_admin:
         raise HTTPException(
@@ -65,7 +62,7 @@ async def list_users_endpoint(
     summary='Get current user'
 )
 async def read_own_profile(
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_active_user)
 ):
     return current_user
 
@@ -78,7 +75,7 @@ async def read_own_profile(
 async def get_user_endpoint(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_active_user)
 ):
     user = await svc_get_user(db, user_id)
     if not user:
@@ -97,7 +94,7 @@ async def update_user_endpoint(
     user_id: UUID,
     user_in: UserUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_active_user)
 ):
     user = await svc_get_user(db, user_id)
     if not user:
@@ -114,7 +111,7 @@ async def update_user_endpoint(
 async def delete_user_endpoint(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_active_user)
 ):
     user = await svc_get_user(db, user_id)
     if not user:

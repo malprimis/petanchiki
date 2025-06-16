@@ -20,6 +20,16 @@ class Settings(BaseSettings):
 
     SQLALCHEMY_ECHO: bool = True
 
+    PROJECT_NAME: str
+    VERSION: str
+    OPENAPI_URL: str = "/api/v1/openapi.json"
+    DOCS_URL: str | None = "/docs"
+    REDOC_URL: str | None = "/redoc"
+    BACKEND_CORS_ORIGINS: list[str] = []
+    HOST: str = "localhost"
+    PORT: int = 8000
+    DEBUG: bool = True
+
     @property
     def database_url_asyncpg(self):
         return f'postgresql+asyncpg:///{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}'

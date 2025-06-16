@@ -83,6 +83,24 @@ async def test_generate_report_pdf(async_session: AsyncSession):
         date=datetime(2025, 1, 1)
     ), author_id=user.id)
 
+    tx2 = await create_transaction(async_session, TransactionCreate(
+        group_id=group.id,
+        category_id=category.id,
+        amount=1000,
+        type=TransactionType.income,
+        description="Зарплата",
+        date=datetime(2025, 1, 1)
+    ), author_id=user.id)
+
+    tx3 = await create_transaction(async_session, TransactionCreate(
+        group_id=group.id,
+        category_id=category.id,
+        amount=500,
+        type=TransactionType.expense,
+        description="Обед",
+        date=datetime(2025, 1, 2)
+    ), author_id=user.id)
+
     req = ReportRequest(group_id=group.id)
     path = await generate_report_pdf(async_session, req)
 

@@ -5,6 +5,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.base import GroupRole
 from app.db.session import get_db
+from app.models.user import User as UserModel
+from app.schemas.group import (
+    GroupCreate,
+    GroupRead,
+    GroupUpdate,
+    UserGroupRead,
+)
+from app.core.security import get_current_active_user, get_current_active_admin
 from app.services.group_service import (
     create_group,
     get_group_by_id as svc_get_group,
@@ -16,14 +24,6 @@ from app.services.group_service import (
     change_user_role_in_group as svc_change_role,
     list_group_members as svc_list_members,
 )
-from app.schemas.group import (
-    GroupCreate,
-    GroupRead,
-    GroupUpdate,
-    UserGroupRead,
-)
-from app.services.auth_service import get_current_user
-from app.models.user import User as UserModel
 
 router = APIRouter(
     prefix="/groups",
@@ -40,7 +40,7 @@ router = APIRouter(
 async def create_group_endpoint(
         group_in: GroupCreate,
         db: AsyncSession = Depends(get_db),
-        current_user: UserModel = Depends(get_current_user)
+        current_user: UserModel = Depends(get_current_active_user)
 ):
     group = await create_group(db, group_in, owner_id=current_user.id)
     return group
@@ -53,7 +53,7 @@ async def create_group_endpoint(
 )
 async def list_my_group(
         db: AsyncSession = Depends(get_db),
-        current_user: UserModel = Depends(get_current_user)
+        current_user: UserModel = Depends(get_current_active_user)
 ):
     return await list_group_by_user(db, current_user.id)
 
@@ -66,7 +66,7 @@ async def list_my_group(
 async def get_group(
         group_id: UUID,
         db: AsyncSession = Depends(get_db),
-        current_user: UserModel = Depends(get_current_user)
+        current_user: UserModel = Depends(get_current_active_user)
 ):
     group = await svc_get_group(db, group_id)
     if not group:
@@ -87,7 +87,7 @@ async def update_group(
         group_id: UUID,
         group_in: GroupUpdate,
         db: AsyncSession = Depends(get_db),
-        current_user: UserModel = Depends(get_current_user)
+        current_user: UserModel = Depends(get_current_active_user)
 ):
     group = await svc_get_group(db, group_id)
 
@@ -106,7 +106,7 @@ async def update_group(
 async def delete_group(
         group_id: UUID,
         db: AsyncSession = Depends(get_db),
-        current_user: UserModel = Depends(get_current_user)
+        current_user: UserModel = Depends(get_current_active_user)
 ):
     group = await svc_get_group(db, group_id)
     if not group:
@@ -140,7 +140,7 @@ async def add_member(
 async def list_members(
         group_id: UUID,
         db: AsyncSession = Depends(get_db),
-        current_user: UserModel = Depends(get_current_user)
+        current_user: UserModel = Depends(get_current_active_user)
 ):
     members = await svc_list_members(db, group_id)
     if not any(m.user_id == current_user.id for m in members):
@@ -158,7 +158,7 @@ async def change_member_role(
         user_id: UUID,
         new_role: GroupRole,
         db: AsyncSession = Depends(get_db),
-        current_user: UserModel = Depends(get_current_user)
+        current_user: UserModel = Depends(get_current_active_user)
 ):
     membership = await svc_change_role(db, group_id, user_id, new_role, current_user)
 
@@ -174,7 +174,7 @@ async def remove_member(
         group_id: UUID,
         user_id: UUID,
         db: AsyncSession = Depends(get_db),
-        current_user: UserModel = Depends(get_current_user)
+        current_user: UserModel = Depends(get_current_active_user)
 ):
     await svc_remove_user(db, group_id, user_id, current_user)
     return None

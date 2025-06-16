@@ -10,14 +10,16 @@ from app.db.base import Base
 from app.core.config import settings
 from app.schemas.user import UserCreate
 from app.services.auth_service import (
-    verify_password,
-    get_password_hash,
     register_user,
     authenticate_user,
-    create_access_token,
-    get_current_user,
     refresh_access_token,
     change_password,
+)
+from app.core.security import (
+    verify_password,
+    get_password_hash,
+    create_access_token,
+    get_current_user,
 )
 
 # Настройка тестовой in-memory БД

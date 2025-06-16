@@ -150,7 +150,7 @@ async def generate_report_pdf(
     c.drawString(2*cm, height - 2*cm, f"Report for Group {req.group_id}")
     c.setFont("Helvetica", 10)
     c.drawString(2*cm, height - 2.5*cm, f"Period: {req.date_from or '–'} to {req.date_to or '–'}")
-    c.drawString(2*cm, height - 3*cm, f"Generated: {datetime.utcnow().isoformat()} UTC")
+    c.drawString(2*cm, height - 3*cm, f"Generated: {datetime.now().isoformat()} UTC")
 
     # 3) Контент
     y = height - 4*cm

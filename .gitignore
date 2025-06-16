@@ -3,6 +3,7 @@ backend/.env
 
 # Python envs
 backend/.venv/
+backend/venv/
 frontend/.venv/
 
 # Docker

@@ -5,6 +5,7 @@ from typing import Sequence
 from fastapi import HTTPException
 from sqlalchemy import select, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.db.base import GroupRole
 from app.models.group import Group
@@ -63,7 +64,8 @@ async def create_group(
 
     db.add(group)
     await db.commit()
-    await db.refresh(group)
+
+    group = await get_group_by_id(db, group.id)
 
     membership = UserGroup(
         group_id=group.id,
@@ -100,9 +102,10 @@ async def get_group_by_id(
         The matching ORM instance **or** *None* when no such group exists (or is
         inactive when *only_active=True*).
     """
-    stmt = select(Group).filter(Group.id == group_id)
+    stmt = select(Group).options(selectinload(Group.members))
     if only_active:
         stmt = stmt.filter(Group.is_active == True)  # noqa: E712
+    stmt = stmt.filter(Group.id == group_id)
     result = await db.execute(stmt)
     return result.scalars().first()
 
@@ -134,6 +137,7 @@ async def list_group_by_user(
         select(Group)
         .join(UserGroup, UserGroup.group_id == Group.id)
         .filter(UserGroup.user_id == user_id, Group.is_active == True)
+        .options(selectinload(Group.members))
     )
 
     result = await db.execute(stmt)

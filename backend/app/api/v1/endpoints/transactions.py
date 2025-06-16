@@ -42,11 +42,11 @@ async def create_transaction_endpoint(
         db: AsyncSession = Depends(get_db),
         current_user: UserModel = Depends(get_current_active_user)
 ):
-    if not is_user_member_in_group(db, payload.group_id, current_user.id):
+    if not await is_user_member_in_group(db, payload.group_id, current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a group member")
 
     category = await get_category_by_id(db, payload.category_id)
-    if not cat or cat.group_id != payload.group_id:
+    if not category or category.group_id != payload.group_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Category does not belong to specified group")
 

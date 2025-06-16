@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from watchfiles import awatch
 
 from app.db.session import get_db
 from app.models.user import User as UserModel
@@ -33,7 +34,7 @@ async def create_category(
         db: AsyncSession = Depends(get_db),
         current_user: UserModel = Depends(get_current_active_user)
 ):
-    if not is_user_member_in_group(db, group_id, current_user.id):
+    if not await is_user_member_in_group(db, group_id, current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Not a group member')
     category = await svc_create_category(db, payload, group_id)
     return category
@@ -49,7 +50,7 @@ async def get_categories(
         db: AsyncSession = Depends(get_db),
         current_user: UserModel = Depends(get_current_active_user)
 ):
-    if not is_user_member_in_group(db, group_id, current_user.id):
+    if not await is_user_member_in_group(db, group_id, current_user.id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Not a group member')
     categories = await svc_list_categories(db, group_id)
     return categories

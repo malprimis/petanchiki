@@ -1,4 +1,5 @@
 import uvicorn
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -17,12 +18,24 @@ from app.api.v1.endpoints import (
     # reports  ← оставим коллегам
 )
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # === startup ===
+    # 1) Создаём таблицы (только в dev; в prod — миграции через Alembic)
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    # === shutdown ===
+    # Например, закрыть соединение с БД
+    await async_engine.dispose()
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     openapi_url=settings.OPENAPI_URL,      # например "/api/v1/openapi.json"
     docs_url=settings.DOCS_URL,            # например "/docs"
-    redoc_url=settings.REDOC_URL           # например "/redoc"
+    redoc_url=settings.REDOC_URL,          # например "/redoc"
+    lifespan=lifespan
 )
 
 # CORS: по умолчанию пустой список, указывайте URL вашего фронтенда в .env
@@ -35,25 +48,14 @@ app.add_middleware(
 )
 
 # Подключаем наши маршруты
-app.include_router(auth.router,        prefix="/api/v1/auth")
-app.include_router(users.router,       prefix="/api/v1/users")
-app.include_router(groups.router,      prefix="/api/v1/groups")
+app.include_router(auth.router,        prefix="/api/v1")
+app.include_router(users.router,       prefix="/api/v1")
+app.include_router(groups.router,      prefix="/api/v1")
 # категории и транзакции — пути уже внутри роутеров включают /groups или /transactions
 app.include_router(categories.router,  prefix="/api/v1")
 app.include_router(transactions.router,prefix="/api/v1")
 # reports остаётся за другим разработчиком:
 # app.include_router(reports.router, prefix="/api/v1/reports")
-
-
-@app.on_event("startup")
-async def on_startup():
-    """
-    На старте (только в dev!) можно автоматически создать таблицы.
-    В продакшене используйте Alembic-миграции.
-    """
-    async with async_engine.begin() as conn:
-        # здесь попадают все модели, у которых Base = declarative_base()
-        await conn.run_sync(Base.metadata.create_all)
 
 
 @app.get("/", tags=["Root"])

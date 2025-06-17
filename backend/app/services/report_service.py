@@ -1,328 +1,230 @@
-# app/services/report_service.py
 import os
 import uuid
-import matplotlib.pyplot as plt
-from io import BytesIO
-from reportlab.lib.utils import ImageReader
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.user import User
-from app.models.transaction import Transaction
-from app.models.category import Category  # Добавлено: тебе нужна модель категории
-from app.schemas.report import ReportRequest
-from app.services.user_service import get_user_by_id
-from app.services.category_service import get_category_by_id
-
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
-from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen.canvas import Canvas
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
+import math
 
+from app.db.base import TransactionType
+from app.models.transaction import Transaction
+from app.services.category_service import get_category_by_id
+from app.services.user_service import get_user_by_id
+from app.schemas.report import ReportRequest
 
+# Регистрация шрифта для кириллицы
+FONT_PATH = Path(__file__).parent.parent / "static" / "fonts" / "DejaVuSans.ttf"
+pdfmetrics.registerFont(TTFont("DejaVuSans", str(FONT_PATH)))
 
-# Убедись, что директория существует
-REPORTS_DIR = Path("reports")
-REPORTS_DIR.mkdir(exist_ok=True)
+# Директория для отчетов
+REPORTS_DIR = Path(os.getenv("REPORTS_DIR", "reports"))
+REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
+# Цветовая палитра (Tableau10)
+PALETTE = [colors.HexColor(h) for h in [
+    "#4e79a7", "#f28e2b", "#e15759", "#76b7b2",
+    "#59a14f", "#edc949", "#af7aa1", "#ff9da7",
+    "#9c755f", "#bab0ab",
+]]
+# Цвет для "Прочие"
+GREY_OTHER = colors.HexColor("#666666")
 
 async def generate_report_data(
     db: AsyncSession,
     req: ReportRequest
-) -> dict[str, Any]:
-    """
-    Генерирует агрегированные данные отчёта по группе.
-    """
+) -> Dict[str, Any]:
+    filters = []
+    if req.date_from:
+        filters.append(Transaction.date >= req.date_from)
+    if req.date_to:
+        filters.append(Transaction.date <= req.date_to)
 
-    # --- Доходы ---
-    income_res = await db.execute(
-        select(func.coalesce(func.sum(Transaction.amount), 0.0))
-        .where(
-            Transaction.group_id == req.group_id,
-            Transaction.type == "income",
-            *([Transaction.date >= req.date_from] if req.date_from else []),
-            *([Transaction.date <= req.date_to] if req.date_to else []),
-        )
+    stmt_sum = lambda ttype: select(func.coalesce(func.sum(Transaction.amount), 0.0)).where(
+        Transaction.group_id == req.group_id,
+        Transaction.type == ttype,
+        *filters
     )
-    total_income = income_res.scalar_one()
+    total_income = (await db.execute(stmt_sum(TransactionType.income))).scalar_one()
+    total_expense = (await db.execute(stmt_sum(TransactionType.expense))).scalar_one()
 
-    # --- Расходы ---
-    expense_res = await db.execute(
-        select(func.coalesce(func.sum(Transaction.amount), 0.0))
-        .where(
-            Transaction.group_id == req.group_id,
-            Transaction.type == "expense",
-            *([Transaction.date >= req.date_from] if req.date_from else []),
-            *([Transaction.date <= req.date_to] if req.date_to else []),
-        )
-    )
-    total_expense = expense_res.scalar_one()
-    balance = total_income - total_expense
+    async def aggregate(stmt, fetch):
+        out = {}
+        for key, amt in (await db.execute(stmt)).all():
+            entity = await fetch(db, key)
+            out[entity.name] = float(amt)
+        return out
 
-    # --- Транзакции ---
-    stmt = (
-        select(Transaction)
-        .where(
-            Transaction.group_id == req.group_id,
-            *([Transaction.date >= req.date_from] if req.date_from else []),
-            *([Transaction.date <= req.date_to] if req.date_to else []),
-        )
-    )
-    result = await db.execute(stmt)
-    transactions = result.scalars().all()
+    build_stmt = lambda attr, ttype: select(attr, func.coalesce(func.sum(Transaction.amount), 0.0)).where(
+        Transaction.group_id == req.group_id,
+        Transaction.type == ttype,
+        *filters
+    ).group_by(attr)
 
-    # --- Разбивка по категориям ---
-    by_category: Optional[Dict[str, float]] = None
-    if req.by_category:
-        cat_stmt = (
-            select(Transaction.category_id, func.sum(Transaction.amount).cast(func.Numeric(10, 2)))
-            .where(
-                Transaction.group_id == req.group_id,
-                *([Transaction.date >= req.date_from] if req.date_from else []),
-                *([Transaction.date <= req.date_to] if req.date_to else []),
-            )
-            .group_by(Transaction.category_id)
-        )
-        cat_result = await db.execute(cat_stmt)
-        categories = cat_result.all()
-        by_category = {}
-        for cat_id, amt in categories:
-            category = await get_category_by_id(db, cat_id)
-            if category:
-                by_category[category.name] = float(amt)
-
-    # --- Разбивка по пользователям ---
-    by_user: Optional[Dict[str, float]] = None
-    if req.by_user:
-        user_stmt = (
-            select(Transaction.user_id, func.sum(Transaction.amount).cast(func.Numeric(10, 2)))
-            .where(
-                Transaction.group_id == req.group_id,
-                *([Transaction.date >= req.date_from] if req.date_from else []),
-                *([Transaction.date <= req.date_to] if req.date_to else []),
-            )
-            .group_by(Transaction.user_id)
-        )
-        user_result = await db.execute(user_stmt)
-        users = user_result.all()
-        by_user = {}
-        for user_id, amt in users:
-            user = await get_user_by_id(db, user_id)
-            if user:
-                by_user[user.name] = float(amt)
+    inc_cat = build_stmt(Transaction.category_id, TransactionType.income)
+    exp_cat = build_stmt(Transaction.category_id, TransactionType.expense)
+    inc_usr = build_stmt(Transaction.user_id, TransactionType.income)
+    exp_usr = build_stmt(Transaction.user_id, TransactionType.expense)
 
     return {
-        "income_total": float(total_income),
-        "expense_total": float(total_expense),
-        "balance": float(balance),
-        "transactions": [
-            {
-                "id": str(tx.id),
-                "amount": float(tx.amount),
-                "type": tx.type.value,
-                "description": tx.description or "",
-                "date": tx.date.isoformat() if tx.date else "",
-                "user_id": str(tx.user_id),
-                "category_id": str(tx.category_id),
-            }
-            for tx in transactions
-        ],
-        "by_category": by_category or {},
-        "by_user": by_user or {},
+        "total_income": float(total_income),
+        "total_expense": float(total_expense),
+        "by_category_income": await aggregate(inc_cat, get_category_by_id),
+        "by_category_expense": await aggregate(exp_cat, get_category_by_id),
+        "by_user_income": await aggregate(inc_usr, get_user_by_id),
+        "by_user_expense": await aggregate(exp_usr, get_user_by_id),
     }
-
-
-from reportlab.platypus import Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib import colors
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-
-# Путь к шрифту с поддержкой кириллицы
-FONT_PATH = Path("static/fonts/DejaVuSans.ttf")
-REPORTS_DIR = Path("reports")
-REPORTS_DIR.mkdir(exist_ok=True)
-
-
-def generate_category_pie_chart(data: dict) -> ImageReader:
-    """
-    Создаёт круговую диаграмму расходов по категориям и возвращает как ImageReader.
-    """
-    if not data:
-        raise ValueError("Нет данных для построения диаграммы")
-
-    labels = list(data.keys())
-    sizes = list(data.values())
-
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.pie(
-        sizes,
-        labels=labels,
-        autopct='%1.1f%%',
-        startangle=90,
-        textprops={'fontname': 'DejaVu Sans', 'fontsize': 10}
-    )
-    ax.axis('equal')  # Для круглой формы диаграммы
-    plt.title("Распределение расходов по категориям")
-
-    # Сохраняем изображение в буфер
-    img_data = BytesIO()
-    plt.savefig(img_data, format='png')
-    plt.close()
-
-    # Возвращаем как ImageReader для ReportLab
-    return ImageReader(BytesIO(img_data.getvalue()))
 
 async def generate_report_pdf(
     db: AsyncSession,
     req: ReportRequest
 ) -> Path:
     data = await generate_report_data(db, req)
-
-    # Создаём файл
     report_id = uuid.uuid4()
-    filename = f"report_{report_id}.pdf"
-    filepath = REPORTS_DIR / filename
+    output_path = REPORTS_DIR / f"report_{report_id}.pdf"
+    c = Canvas(str(output_path), pagesize=A4)
+    w, h = A4
 
-    # --- Настройка холста ---
-    c = canvas.Canvas(str(filepath), pagesize=A4)
-    width, height = A4
+    # Заголовок
+    c.setFont("DejaVuSans", 16)
+    c.drawString(2*cm, h-2*cm, f"Отчёт по группе {req.group_id}")
+    c.setFont("DejaVuSans", 10)
+    period = f"{req.date_from or '-'} — {req.date_to or '-'}"
+    c.drawString(2*cm, h-2.5*cm, f"Период: {period}")
+    c.drawString(2*cm, h-3*cm, f"Сгенерировано: {datetime.now().isoformat()} UTC")
 
-    # --- Регистрация шрифта с поддержкой кириллицы ---
-    if FONT_PATH.exists():
-        pdfmetrics.registerFont(TTFont('DejaVu', str(FONT_PATH)))
-        c.setFont("DejaVu", 10)
-    else:
-        c.setFont("Helvetica", 10)
+    margin = 2*cm
+    chart_size = 4*cm
+    y = h - 4*cm
 
-    # --- Логотип ---
-    logo_path = Path("static") / "logo.png"
-    if logo_path.exists():
-        c.drawImage(str(logo_path), x=2 * cm, y=height - 3 * cm, width=2.5 * cm, height=1.5 * cm)
+    def draw_section(title:str, items:Dict[str,float], y0:float)->float:
+        # группировка
+        N=5
+        si = sorted(items.items(),key=lambda kv:kv[1],reverse=True)
+        grp = si[:N] + [("Прочие",sum(v for _,v in si[N:]))] if len(si)>N else si
 
-    # --- Заголовок ---
-    y = height - 5 * cm  # Смещаем ниже для логотипа
+        y1 = y0 - cm
+        if not grp:
+            return y1
+        # заголовок
+        c.setFont('DejaVuSans',12)
+        c.setFillColor(colors.black)
 
-    if FONT_PATH.exists():
-        c.setFont("DejaVu", 16)
-    else:
-        c.setFont("Helvetica-Bold", 16)
+        c.drawString(margin,y0,title)
+        # отступ всегда
 
-    c.drawString(5.5 * cm, y, f"Финансовый отчёт — группа {req.group_id}")
-    y -= 0.7 * cm
-    c.setFont("DejaVu", 10) if FONT_PATH.exists() else c.setFont("Helvetica", 10)
-    c.drawString(5.5 * cm, y, f"Период: {req.date_from or 'начала'} — {req.date_to or 'сегодня'}")
-    y -= 0.5 * cm
-    c.drawString(5.5 * cm, y, f"Сгенерировано: {datetime.now().isoformat()}")
-    y -= 1.5 * cm
+        labels, vals = zip(*grp)
+        tot = sum(vals) or 1.0
+        pad, box = 0.5*cm,0.4*cm
 
-    # --- Таблица Итогов ---
-    summary_data = [
-        ["Income", "Expense", "Balance"],
-        [data['income_total'], data['expense_total'], data['balance']]
-    ]
-    summary_table = Table(summary_data)
-    summary_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    summary_table.wrapOn(c, width, height)
-    summary_table.drawOn(c, 2 * cm, y)
-    y -= 2 * cm
+        # легенда
+        lx, ly = margin, y1
+        c.setFont('DejaVuSans',10)
+        for i,(lbl,val) in enumerate(grp):
+            col = GREY_OTHER if lbl=='Прочие' else PALETTE[i%len(PALETTE)]
+            c.setFillColor(col);c.rect(lx,ly-box,box,box,fill=1,stroke=0)
+            c.setFillColor(colors.black)
+            c.drawString(lx+box+0.2*cm,ly-box+2,f"{lbl} ({val:.2f})")
+            ly -= box+0.3*cm
 
-    # Рисуем диаграмму
-    if data["by_category"]:
-        img_reader = generate_category_pie_chart(data["by_category"])
-        c.drawImage(img_reader, 2 * cm, y - 8 * cm, width=12 * cm, height=8 * cm)
-        y -= 9 * cm
+        # круг
+        cx,cy = w-margin-chart_size/2, y1-pad-chart_size/2
+        r = chart_size/2
+        c.setLineWidth(1);c.setStrokeColor(colors.black)
+        start=0
+        for i,(lbl,val) in enumerate(grp):
+            ang = val/tot*360
+            col = GREY_OTHER if lbl=='Прочие' else PALETTE[i%len(PALETTE)]
+            c.setFillColor(col);c.wedge(cx-r,cy-r,cx+r,cy+r,start,ang,fill=1,stroke=1)
+            mid = start+ang/2;rad=math.radians(mid)
+            tx,ty = cx+0.6*r*math.cos(rad), cy+0.6*r*math.sin(rad)
+            txtcol = colors.white
+            c.setFillColor(txtcol);c.setFont('DejaVuSans',10)
+            c.drawCentredString(tx,ty,f"{val/tot*100:.0f}%")
+            start+=ang
+        c.circle(cx,cy,r,stroke=1,fill=0)
 
-    # --- Таблица по категориям ---
-    if data["by_category"]:
-        category_data = [["Category", "Amount"]]
-        for name, amount in data["by_category"].items():
-            category_data.append([name, amount])
+        used = max(len(grp)*(box+0.3*cm),chart_size)
+        return y1 - used - cm
 
-        category_table = Table(category_data)
-        category_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTSIZE', (0, 0), (-1, 0), 12),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
-        category_table.wrapOn(c, width, height)
-        category_table.drawOn(c, 2 * cm, y)
-        y -= len(category_data) * 0.5 * cm + 0.5 * cm
+    # Отрисовка секций
+    y = draw_section("Траты по категориям:", data["by_category_expense"], y)
+    y = draw_section("Доходы по категориям:", data["by_category_income"], y)
+    y = draw_section("Траты по пользователям:", data["by_user_expense"], y)
+    y = draw_section("Доходы по пользователям:", data["by_user_income"], y)
 
-    # --- Таблица по пользователям ---
-    if data["by_user"]:
-        user_data = [["User", "Amount"]]
-        for name, amount in data["by_user"].items():
-            user_data.append([name, amount])
+    # Итоги
+    c.setFont("DejaVuSans", 12)
+    c.setFillColor(colors.black)
+    c.drawString(margin, y, f"Всего расходов: {data['total_expense']:.2f}")
+    c.drawString(margin, y-cm, f"Всего доходов: {data['total_income']:.2f}")
 
-        user_table = Table(user_data)
-        user_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTSIZE', (0, 0), (-1, 0), 12),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
-        user_table.wrapOn(c, width, height)
-        user_table.drawOn(c, 2 * cm, y)
-        y -= len(user_data) * 0.5 * cm + 0.5 * cm
+    # Таблица транзакций
+    c.showPage()
+    c.setFont("DejaVuSans", 12)
+    c.drawString(margin, h-2*cm, "Список транзакций:")
 
-    # --- Таблица транзакций ---
-    transaction_data = [["Data", "Type", "Description", "Amount"]]
-    for tx in data["transactions"]:
-        transaction_data.append([
-            tx["date"],
-            tx["type"],
-            tx["description"] or "",
-            tx["amount"]
+    # Сбор транзакций
+    filters = []
+    if req.date_from:
+        filters.append(Transaction.date >= req.date_from)
+    if req.date_to:
+        filters.append(Transaction.date <= req.date_to)
+    stmt = select(Transaction).where(Transaction.group_id == req.group_id, *filters).order_by(Transaction.date)
+    txs = (await db.execute(stmt)).scalars().all()
+
+    # Подготовка данных таблицы
+    table_data = [["Дата", "Тип", "Категория", "Пользователь", "Описание", "Сумма"]]
+    for tx in txs:
+        cat = await get_category_by_id(db, tx.category_id)
+        user = await get_user_by_id(db, tx.user_id)
+
+        type_rus = "Доходы" if tx.type == TransactionType.income else "Расходы"
+        table_data.append([
+            tx.date.strftime('%Y-%m-%d'),
+            type_rus,
+            cat.name,
+            user.name,
+            tx.description or "",
+            f"{tx.amount:.2f}"
         ])
 
-    tx_table = Table(transaction_data, colWidths=[5 * cm, 2.5 * cm, 7 * cm, 3 * cm])
-    tx_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+    # Создание и отрисовка таблицы
+    col_widths = [2.5*cm, 2*cm, 3*cm, 3*cm, 5*cm, 2.5*cm]
+    tbl = Table(table_data, colWidths=col_widths)
+    tbl.setStyle(TableStyle([
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
+        ('FONTSIZE', (0, 0), (-1, -1), 12),
     ]))
+    # Вычисление высоты таблицы
+    row_height = 0.7 * cm
+    table_height = row_height * len(table_data)
+    y_table_start = h - 3 * cm
+    tbl.wrapOn(c, w - 2 * margin, table_height)
+    tbl.drawOn(c, margin, y_table_start - table_height)
 
-    # Если места не хватает — новая страница
-    if y < len(transaction_data) * 0.5 * cm + 2 * cm:
-        c.showPage()
-        y = height - 3 * cm
-
-    tx_table.wrapOn(c, width, height)
-    tx_table.drawOn(c, 2 * cm, y)
-
-    # --- Сохраняем PDF ---
     c.save()
-    return filepath
+    return output_path
+
+
+
+
 
 async def get_report_file_path(report_id: uuid.UUID) -> Path:
-    """
-    Возвращает путь к файлу отчёта по его ID.
-    """
     pattern = f"report_{report_id}"
-    for fname in os.listdir(REPORTS_DIR):
-        if fname.startswith(pattern):
-            return REPORTS_DIR / fname
-    raise FileNotFoundError(f"Report with ID {report_id} not found.")
+    for file in REPORTS_DIR.iterdir():
+        if file.name.startswith(pattern) and file.suffix == ".pdf":
+            return file
+    raise FileNotFoundError(f"Report {report_id} not found")

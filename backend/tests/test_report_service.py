@@ -62,10 +62,8 @@ async def test_generate_report_data(async_session: AsyncSession):
     req = ReportRequest(group_id=group.id)
     data = await generate_report_data(async_session, req)
 
-    assert data["income_total"] == 1000
-    assert data["expense_total"] == 500
-    assert data["balance"] == 500
-    assert len(data["transactions"]) == 2
+    assert data["total_income"] == 1000
+    assert data["total_expense"] == 500
 
 
 @pytest.mark.asyncio(loop_scope="session")

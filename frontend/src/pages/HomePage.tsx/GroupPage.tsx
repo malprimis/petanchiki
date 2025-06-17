@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import styled from 'styled-components';
 
 interface Transaction {
   id: number;
@@ -17,6 +18,193 @@ interface Group {
   transactions: Transaction[];
   color: string;
 }
+
+const PageContainer = styled.div`
+  min-height: 100vh;
+  min-width: 208vh;
+  background: #f8fafc;
+`;
+
+const PageHeader = styled.header`
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+`;
+
+const HeaderContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const BackButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin-right: 1rem;
+  color: #4b5563;
+  transition: color 0.2s;
+  font-size: 1.5rem;
+  line-height: 1;
+
+  &:hover {
+    color: #059669;
+  }
+`;
+
+const MainNav = styled.nav`
+  display: flex;
+  gap: 1rem;
+`;
+
+const NavLink = styled(Link)`
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #4b5563;
+  text-decoration: none;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #059669;
+  }
+`;
+
+const AuthButtons = styled.div`
+  display: flex;
+  gap: 0.75rem;
+`;
+
+const LoginBtn = styled.button`
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  color: #4b5563;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    color: #111827;
+  }
+`;
+
+const RegisterBtn = styled.button`
+  padding: 0.5rem 1rem;
+  background: linear-gradient(to right, #10b981, #059669);
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    background: linear-gradient(to right, #0ea472, #047857);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const GroupContent = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+`;
+
+const Header = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+`;
+
+const Section = styled.div`
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #1e293b;
+  }
+`;
+
+const TransactionsHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+`;
+
+const AddTransactionBtn = styled.button`
+  background: #16a34a;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #15803d;
+  }
+`;
+
+const TransactionFields = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  input {
+    padding: 0.5rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.375rem;
+  }
+`;
+
+const SubmitBtn = styled.button`
+  display: block;
+  width: 100%;
+  padding: 1rem;
+  background: #059669;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 2rem;
+
+  &:hover {
+    background: #047857;
+  }
+
+  &:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+`;
 
 export default function CreateGroupPage() {
   const navigate = useNavigate();
@@ -61,7 +249,7 @@ export default function CreateGroupPage() {
     value: string | number
   ) => {
     const updated = [...transactions];
-    updated[index][field] = value as any;
+    updated[index][field] = value as never;
     setTransactions(updated);
   };
 
@@ -99,41 +287,29 @@ export default function CreateGroupPage() {
     navigate(`/group/${groupId}`);
   };
 
-  // ... остальной код (return и стили остаются без изменений)
   return (
-    <div className="page-container">
-      {/* Верхнее меню */}
-      <header className="page-header">
-        <div className="header-container">
-          <button onClick={handleGoBack} className="back-button">
-            ← {/* Символ стрелки */}
-          </button>
-
-          <nav className="main-nav">
+    <PageContainer>
+      <PageHeader>
+        <HeaderContainer>
+          <BackButton onClick={handleGoBack}>←</BackButton>
+          <MainNav>
             {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className="nav-link"
-              >
-                {item.name}
-              </Link>
+              <NavLink key={item.path} to={item.path}>{item.name}</NavLink>
             ))}
-          </nav>
+          </MainNav>
+          <AuthButtons>
+            <LoginBtn>Вход</LoginBtn>
+            <RegisterBtn>Регистрация</RegisterBtn>
+          </AuthButtons>
+        </HeaderContainer>
+      </PageHeader>
 
-          <div className="auth-buttons">
-            <button className="login-btn">Вход</button>
-            <button className="register-btn">Регистрация</button>
-          </div>
-        </div>
-      </header>
-
-      <div className="group-content">
-        <div className="header">
+      <GroupContent>
+        <Header>
           <h1>Создание новой группы</h1>
-        </div>
+        </Header>
 
-        <div className="section">
+        <Section>
           <label>Название группы</label>
           <input
             type="text"
@@ -141,9 +317,9 @@ export default function CreateGroupPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-        </div>
+        </Section>
 
-        <div className="section">
+        <Section>
           <label>Участники (через запятую)</label>
           <input
             type="text"
@@ -151,27 +327,27 @@ export default function CreateGroupPage() {
             value={members}
             onChange={(e) => setMembers(e.target.value)}
           />
-        </div>
+        </Section>
 
-        <div className="section">
+        <Section>
           <label>Начальный баланс</label>
           <input
             type="number"
             value={balance}
             onChange={(e) => setBalance(Number(e.target.value))}
           />
-        </div>
+        </Section>
 
-        <div className="section">
-          <div className="transactions-header">
+        <Section>
+          <TransactionsHeader>
             <h2>Транзакции (необязательно)</h2>
-            <button onClick={addTransactionField} className="add-transaction-btn">
+            <AddTransactionBtn onClick={addTransactionField}>
               Добавить транзакцию
-            </button>
-          </div>
+            </AddTransactionBtn>
+          </TransactionsHeader>
 
           {transactions.map((t, idx) => (
-            <div key={idx} className="transaction-fields">
+            <TransactionFields key={idx}>
               <input
                 type="date"
                 value={t.date}
@@ -195,302 +371,17 @@ export default function CreateGroupPage() {
                 value={t.member}
                 onChange={(e) => handleTransactionChange(idx, 'member', e.target.value)}
               />
-            </div>
+            </TransactionFields>
           ))}
-        </div>
+        </Section>
 
-        <button 
-          onClick={handleSubmit} 
-          disabled={!name.trim()} 
-          className="submit-btn"
+        <SubmitBtn
+          onClick={handleSubmit}
+          disabled={!name.trim()}
         >
           Создать группу
-        </button>
-      </div>
-
-      <style jsx>{`
-        .page-container {
-          min-height: 100vh;
-          min-width: 208vh; 
-          background: #f8fafc;
-        }
-
-        /* Стили для верхнего меню */
-        .page-header {
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(12px);
-          position: sticky;
-          top: 0;
-          z-index: 40;
-          border-bottom: 1px solid #e5e7eb;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .header-container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0.75rem 1rem;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        /* Стили для кнопки назад */
-        .back-button {
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 0.5rem;
-          margin-right: 1rem;
-          color: #4b5563;
-          transition: color 0.2s;
-          font-size: 1.5rem;
-          line-height: 1;
-        }
-
-        .back-button:hover {
-          color: #059669;
-        }
-
-        .logo-link {
-          display: flex;
-          align-items: center;
-          text-decoration: none;
-        }
-
-        .logo {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #059669;
-        }
-
-        .main-nav {
-          display: flex;
-          gap: 1rem;
-        }
-
-        .nav-link {
-          padding: 0.5rem 1rem;
-          font-size: 1rem;
-          font-weight: 500;
-          color: #4b5563;
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-
-        .nav-link:hover {
-          color: #059669;
-        }
-
-        .auth-buttons {
-          display: flex;
-          gap: 0.75rem;
-        }
-
-        .login-btn {
-          padding: 0.5rem 1rem;
-          background: transparent;
-          border: none;
-          color: #4b5563;
-          font-weight: 500;
-          cursor: pointer;
-        }
-
-        .login-btn:hover {
-          color: #111827;
-        }
-
-        .register-btn {
-          padding: 0.5rem 1rem;
-          background: linear-gradient(to right, #10b981, #059669);
-          color: white;
-          border: none;
-          border-radius: 0.375rem;
-          font-weight: 500;
-          cursor: pointer;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        .register-btn:hover {
-          background: linear-gradient(to right, #0ea472, #047857);
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Стили для основного содержимого */
-        .group-content {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 1rem;
-        }
-
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
-          padding-bottom: 1rem;
-          border-bottom: 1px solid #e2e8f0;
-        }
-
-        .header h1 {
-          font-size: 2rem;
-          font-weight: 700;
-          color: #1e293b;
-        }
-
-        .balance {
-          font-size: 1.25rem;
-          color: #334155;
-        }
-
-        .section {
-          margin-bottom: 2rem;
-          background: white;
-          padding: 1.5rem;
-          border-radius: 0.5rem;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .section h2 {
-          font-size: 1.5rem;
-          font-weight: 600;
-          margin-bottom: 1rem;
-          color: #1e293b;
-        }
-
-        .members-list {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.5rem;
-        }
-
-        .member-tag {
-          background: #e2e8f0;
-          padding: 0.5rem 1rem;
-          border-radius: 9999px;
-          font-size: 0.875rem;
-          color: #334155;
-        }
-
-        .category-section {
-          background: white;
-          padding: 1.5rem;
-          border-radius: 0.5rem;
-          margin-bottom: 2rem;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .categories-list {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.5rem;
-          margin-bottom: 1rem;
-        }
-
-        .category-tag {
-          background: #dbeafe;
-          color: #1d4ed8;
-          padding: 0.5rem 1rem;
-          border-radius: 9999px;
-          font-size: 0.875rem;
-        }
-
-        .category-input {
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        .category-input input {
-          flex: 1;
-          padding: 0.5rem 1rem;
-          border: 1px solid #cbd5e1;
-          border-radius: 0.375rem;
-          font-size: 1rem;
-        }
-
-        .category-input button {
-          background: #2563eb;
-          color: white;
-          border: none;
-          padding: 0.5rem 1rem;
-          border-radius: 0.375rem;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-
-        .category-input button:hover {
-          background: #1d4ed8;
-        }
-
-        .transactions-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1rem;
-        }
-
-        .transactions-header button {
-          background: #16a34a;
-          color: white;
-          border: none;
-          padding: 0.5rem 1rem;
-          border-radius: 0.375rem;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-
-        .transactions-header button:hover {
-          background: #15803d;
-        }
-
-        .transactions-table {
-          background: white;
-          border-radius: 0.5rem;
-          overflow: hidden;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-
-        th, td {
-          padding: 1rem;
-          text-align: left;
-          border-bottom: 1px solid #e2e8f0;
-        }
-
-        th {
-          background: #f1f5f9;
-          font-weight: 600;
-          color: #334155;
-        }
-
-        tr:hover {
-          background: #f8fafc;
-        }
-
-        .transactions-table button {
-          color: #dc2626;
-          background: none;
-          border: none;
-          cursor: pointer;
-          transition: color 0.2s;
-        }
-
-        .transactions-table button:hover {
-          color: #b91c1c;
-        }
-
-        .loading, .not-found {
-          min-height: 100vh;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          font-size: 1.5rem;
-        }
-      `}</style>
-    </div>
+        </SubmitBtn>
+      </GroupContent>
+    </PageContainer>
   );
-} 
+}

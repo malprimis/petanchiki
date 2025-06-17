@@ -1,11 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import HomePage from '../src/pages/HomePage.tsx/HomePage.tsx';
-import GroupNew from  'C:/Users/Линиза/OneDrive/Pictures/Desktop/Python Project/my-budget-app/src/pages/GroupNew.tsx'
+import GroupNew from  '../src/pages/GroupNew.tsx';
 import AddTransaction from '../src/pages/HomePage.tsx/AddTransaction.tsx';
 import Reports from '../src/pages/HomePage.tsx/Reports.tsx';
 import { LoginPage } from '../src/pages/HomePage.tsx/LoginPage.tsx';
 import { RegisterPage } from '../src/pages/HomePage.tsx/RegisterPage.tsx';
-import CreateGroup from 'C:/Users/Линиза/OneDrive/Pictures/Desktop/Python Project/my-budget-app/src/pages/CreateGroup.tsx';
+import CreateGroup from '../src/pages/CreateGroup.tsx';
 
 function App() {
   return (

@@ -47,7 +47,12 @@ export const AuthForm = (props: AuthFormProps) => {
         await props.onSubmit(email, password);
       }
       navigate('/');
-    } catch (err) {
+    } catch (err: unknown) {
+      //подправлено 
+      if (typeof err === 'object' && err !== null && 'message' in err) {
+        console.error(err.message);
+      }
+
       setError('Ошибка авторизации');
     }
   };

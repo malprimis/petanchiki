@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import { DatePicker, Select, Spin, Alert, Button } from 'antd';
 import dayjs from 'dayjs';
+import styled from 'styled-components';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -69,6 +70,7 @@ const ReportsPage = () => {
       await new Promise(resolve => setTimeout(resolve, 800));
       
       // Моковые данные
+      // Нет вообще запроса 
       const mockCategoryData: CategoryData[] = [
         { name: 'Продукты', value: 400 },
         { name: 'Транспорт', value: 300 },
@@ -91,7 +93,7 @@ const ReportsPage = () => {
       setLineData(mockLineData);
       setCategories(mockCategories);
       
-    } catch (err) {
+    } catch  {
       setError('Ошибка загрузки данных');
     } finally {
       setLoading(false);
@@ -105,7 +107,7 @@ const ReportsPage = () => {
   // Обработчики фильтров
   const handleDateChange = (
     dates: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null, 
-    dateStrings: [string, string]
+    //dateStrings: [string, string] // вообще не используется 
   ) => {
     if (dates && dates[0] && dates[1]) {
       setDateRange([dates[0], dates[1]]);
@@ -135,92 +137,280 @@ const ReportsPage = () => {
     return `${name} ${(percent * 100).toFixed(0)}%`;
   };
 
+  // Styled components
+  const PageContainer = styled.div`
+    min-height: 100vh;
+    min-width: 208vh;
+    background: #f8fafc;
+  `;
+
+  const PageHeader = styled.header`
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  `;
+
+  const HeaderContainer = styled.div`
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  `;
+
+  const BackButton = styled.button`
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin-right: 1rem;
+    color: #4b5563;
+    transition: color 0.2s;
+    font-size: 1.5rem;
+    line-height: 1;
+
+    &:hover {
+      color: #059669;
+    }
+  `;
+
+  const LogoLink = styled(Link)`
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+  `;
+
+  const Logo = styled.div`
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #059669;
+  `;
+
+  const MainNav = styled.nav`
+    display: flex;
+    gap: 1rem;
+  `;
+
+  const NavLink = styled(Link)`
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #4b5563;
+    text-decoration: none;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #059669;
+    }
+  `;
+
+  const AuthButtons = styled.div`
+    display: flex;
+    gap: 0.75rem;
+  `;
+
+  const LoginBtn = styled.button`
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    color: #4b5563;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+      color: #111827;
+    }
+  `;
+
+  const RegisterBtn = styled.button`
+    padding: 0.5rem 1rem;
+    background: linear-gradient(to right, #10b981, #059669);
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      background: linear-gradient(to right, #0ea472, #047857);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+  `;
+
+  const ReportsContent = styled.div`
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+  `;
+
+  const ReportsTitle = styled.h1`
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+  `;
+
+  const FiltersSection = styled.div`
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+  `;
+
+  const FiltersTitle = styled.h2`
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #1e293b;
+  `;
+
+  const FiltersGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    align-items: flex-end;
+  `;
+
+  const FilterGroup = styled.div`
+    display: flex;
+    flex-direction: column;
+
+    label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #334155;
+      margin-bottom: 0.5rem;
+    }
+  `;
+
+  const FilterInput = styled.div`
+    width: 100%;
+  `;
+
+  const ApplyBtn = styled(Button)`
+    width: 100%;
+    background: #2563eb;
+    border: none;
+
+    &:hover {
+      background: #1d4ed8;
+    }
+  `;
+
+  const LoadingSpinner = styled.div`
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+  `;
+
+  const ErrorAlert = styled.div`
+    margin-bottom: 2rem;
+  `;
+
+  const ChartsGrid = styled.div`
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+
+    @media (min-width: 1024px) {
+      grid-template-columns: 1fr 1fr;
+    }
+  `;
+
+  const ChartContainer = styled.div`
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #1e293b;
+    }
+  `;
+
+  const ChartWrapper = styled.div`
+    height: 400px;
+  `;
+
   return (
-    <div className="page-container">
-      {/* Верхнее меню */}
-      <header className="page-header">
-        <div className="header-container">
-          <button onClick={handleGoBack} className="back-button">
-            ← {/* Символ стрелки */}
-          </button>
-          
-          <Link to="/" className="logo-link">
-            <div className="logo">CashCrew</div>
-          </Link>
-
-          <nav className="main-nav">
+    <PageContainer>
+      <PageHeader>
+        <HeaderContainer>
+          <BackButton onClick={handleGoBack}>←</BackButton>
+          <LogoLink to="/"><Logo>CashCrew</Logo></LogoLink>
+          <MainNav>
             {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className="nav-link"
-              >
-                {item.name}
-              </Link>
+              <NavLink key={item.path} to={item.path}>{item.name}</NavLink>
             ))}
-          </nav>
+          </MainNav>
+          <AuthButtons>
+            <LoginBtn>Вход</LoginBtn>
+            <RegisterBtn>Регистрация</RegisterBtn>
+          </AuthButtons>
+        </HeaderContainer>
+      </PageHeader>
 
-          <div className="auth-buttons">
-            <button className="login-btn">Вход</button>
-            <button className="register-btn">Регистрация</button>
-          </div>
-        </div>
-      </header>
-
-      <div className="reports-content">
-        <h1>Отчеты</h1>
-        
-        {/* Блок фильтров */}
-        <div className="filters-section">
-          <h2>Фильтры</h2>
-          
-          <div className="filters-grid">
-            <div className="filter-group">
+      <ReportsContent>
+        <ReportsTitle>Отчеты</ReportsTitle>
+        <FiltersSection>
+          <FiltersTitle>Фильтры</FiltersTitle>
+          <FiltersGrid>
+            <FilterGroup>
               <label>Период</label>
-              <RangePicker
-                value={dateRange}
-                onChange={handleDateChange}
-                className="filter-input"
-              />
-            </div>
-            
-            <div className="filter-group">
+              <FilterInput>
+                <RangePicker
+                  value={dateRange}
+                  onChange={handleDateChange}
+                  className="filter-input"
+                />
+              </FilterInput>
+            </FilterGroup>
+            <FilterGroup>
               <label>Категории</label>
-              <Select
-                mode="multiple"
-                placeholder="Все категории"
-                value={selectedCategories}
-                onChange={handleCategoryChange}
-                className="filter-input"
-              >
-                {categories.map(category => (
-                  <Option key={category} value={category}>{category}</Option>
-                ))}
-              </Select>
-            </div>
-            
-            <div className="filter-group">
-              <Button 
+              <FilterInput>
+                <Select
+                  mode="multiple"
+                  placeholder="Все категории"
+                  value={selectedCategories}
+                  onChange={handleCategoryChange}
+                  className="filter-input"
+                >
+                  {categories.map(category => (
+                    <Option key={category} value={category}>{category}</Option>
+                  ))}
+                </Select>
+              </FilterInput>
+            </FilterGroup>
+            <FilterGroup>
+              <ApplyBtn 
                 type="primary" 
                 onClick={applyFilters}
                 className="apply-btn"
               >
                 Применить
-              </Button>
-            </div>
-          </div>
-        </div>
+              </ApplyBtn>
+            </FilterGroup>
+          </FiltersGrid>
+        </FiltersSection>
 
-        {/* Состояние загрузки */}
         {loading && (
-          <div className="loading-spinner">
+          <LoadingSpinner>
             <Spin size="large" />
-          </div>
+          </LoadingSpinner>
         )}
 
-        {/* Ошибка */}
         {error && (
-          <div className="error-alert">
+          <ErrorAlert>
             <Alert 
               message={error} 
               type="error" 
@@ -235,16 +425,14 @@ const ReportsPage = () => {
                 </Button>
               }
             />
-          </div>
+          </ErrorAlert>
         )}
 
-        {/* Графики */}
         {!loading && !error && (
-          <div className="charts-grid">
-            {/* Круговая диаграмма */}
-            <div className="chart-container">
+          <ChartsGrid>
+            <ChartContainer>
               <h2>Распределение по категориям</h2>
-              <div className="chart-wrapper">
+              <ChartWrapper>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -265,13 +453,11 @@ const ReportsPage = () => {
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Линейный график */}
-            <div className="chart-container">
+              </ChartWrapper>
+            </ChartContainer>
+            <ChartContainer>
               <h2>Динамика расходов</h2>
-              <div className="chart-wrapper">
+              <ChartWrapper>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={lineData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -289,226 +475,12 @@ const ReportsPage = () => {
                     />
                   </LineChart>
                 </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
+              </ChartWrapper>
+            </ChartContainer>
+          </ChartsGrid>
         )}
-      </div>
-
-      <style jsx>{`
-        .page-container {
-          min-height: 100vh;
-          min-width: 208vh; 
-          background: #f8fafc;
-        }
-
-        /* Стили для верхнего меню */
-        .page-header {
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(12px);
-          position: sticky;
-          top: 0;
-          z-index: 40;
-          border-bottom: 1px solid #e5e7eb;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .header-container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0.75rem 1rem;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        /* Стили для кнопки назад */
-        .back-button {
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 0.5rem;
-          margin-right: 1rem;
-          color: #4b5563;
-          transition: color 0.2s;
-          font-size: 1.5rem;
-          line-height: 1;
-        }
-
-        .back-button:hover {
-          color: #059669;
-        }
-
-        .logo-link {
-          display: flex;
-          align-items: center;
-          text-decoration: none;
-        }
-
-        .logo {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #059669;
-        }
-
-        .main-nav {
-          display: flex;
-          gap: 1rem;
-        }
-
-        .nav-link {
-          padding: 0.5rem 1rem;
-          font-size: 1rem;
-          font-weight: 500;
-          color: #4b5563;
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-
-        .nav-link:hover {
-          color: #059669;
-        }
-
-        .auth-buttons {
-          display: flex;
-          gap: 0.75rem;
-        }
-
-        .login-btn {
-          padding: 0.5rem 1rem;
-          background: transparent;
-          border: none;
-          color: #4b5563;
-          font-weight: 500;
-          cursor: pointer;
-        }
-
-        .login-btn:hover {
-          color: #111827;
-        }
-
-        .register-btn {
-          padding: 0.5rem 1rem;
-          background: linear-gradient(to right, #10b981, #059669);
-          color: white;
-          border: none;
-          border-radius: 0.375rem;
-          font-weight: 500;
-          cursor: pointer;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        .register-btn:hover {
-          background: linear-gradient(to right, #0ea472, #047857);
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Стили для основного содержимого */
-        .reports-content {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 1rem;
-        }
-
-        .reports-content h1 {
-          font-size: 2rem;
-          font-weight: 700;
-          color: #1e293b;
-          margin-bottom: 1.5rem;
-        }
-
-        /* Стили для фильтров */
-        .filters-section {
-          background: white;
-          padding: 1.5rem;
-          border-radius: 0.5rem;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-          margin-bottom: 2rem;
-        }
-
-        .filters-section h2 {
-          font-size: 1.25rem;
-          font-weight: 600;
-          margin-bottom: 1rem;
-          color: #1e293b;
-        }
-
-        .filters-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 1rem;
-          align-items: flex-end;
-        }
-
-        .filter-group {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .filter-group label {
-          font-size: 0.875rem;
-          font-weight: 500;
-          color: #334155;
-          margin-bottom: 0.5rem;
-        }
-
-        .filter-input {
-          width: 100%;
-        }
-
-        .apply-btn {
-          width: 100%;
-          background: #2563eb;
-          border: none;
-        }
-
-        .apply-btn:hover {
-          background: #1d4ed8;
-        }
-
-        /* Стили для загрузки и ошибок */
-        .loading-spinner {
-          display: flex;
-          justify-content: center;
-          padding: 2rem;
-        }
-
-        .error-alert {
-          margin-bottom: 2rem;
-        }
-
-        /* Стили для графиков */
-        .charts-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 2rem;
-        }
-
-        @media (min-width: 1024px) {
-          .charts-grid {
-            grid-template-columns: 1fr 1fr;
-          }
-        }
-
-        .chart-container {
-          background: white;
-          padding: 1.5rem;
-          border-radius: 0.5rem;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .chart-container h2 {
-          font-size: 1.25rem;
-          font-weight: 600;
-          margin-bottom: 1rem;
-          color: #1e293b;
-        }
-
-        .chart-wrapper {
-          height: 400px;
-        }
-      `}</style>
-    </div>
+      </ReportsContent>
+    </PageContainer>
   );
 };
 

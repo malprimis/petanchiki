@@ -1,3 +1,4 @@
+import styled from 'styled-components';
 import { LoginForm } from '../../components/LoginForm';
 import { Link } from 'react-router-dom';
 import { Card, Typography, Divider, Space } from 'antd';
@@ -5,48 +6,67 @@ import { UserOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
+// Styled components
+const PageWrapper = styled.div`
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+`;
+
+const StyledCard = styled(Card)`
+  border-radius: 16px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+  padding: 48px 40px !important;
+  margin: 95px auto 90px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+  text-align: center;
+  background-color: #ffffff !important;
+  max-width: 400px;
+  width: 100%;
+`;
+
+const AvatarCircle = styled.div`
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 10px auto;
+  background-color: #1890ff;
+  color: white;
+  box-shadow: 0 6px 16px rgba(24, 144, 255, 0.4);
+  font-size: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const FullWidth = styled.div`
+  width: 100%;
+`;
+
+const StyledLink = styled(Link)`
+  color: #2563eb;
+  font-weight: 500;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #1d4ed8;
+  }
+`;
+
 export const LoginPage = () => {
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-6"
-      style={{ 
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%)',
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-      }}
-    >
-      <Card 
-        className="w-full max-w-md mx-auto shadow-lg"
-        style={{ 
-          borderRadius: '16px',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
-          padding: '48px 40px',
-          margin: '95px 595px 90px 595px',
-          display: 'center',
-          flexDirection: 'column',
-          gap: '24px',
-          alignItems: 'center',
-          textAlign: 'center',
-          backgroundColor: '#ffffff' // Белый фон для карточки
-        }}
-      >
+    <PageWrapper>
+      <StyledCard>
         {/* Аватар/иконка */}
-        <div 
-          className="flex items-center justify-center"
-          style={{
-            width: '80px',
-            height: '80px',
-            borderRadius: '50%',
-            margin: '10px 70px 10px 70px',
-            backgroundColor: '#1890ff',
-            color: 'white',
-            boxShadow: '0 6px 16px rgba(24, 144, 255, 0.4)',
-            fontSize: '36px'
-          }}
-        >
+        <AvatarCircle>
           <UserOutlined />
-        </div>
+        </AvatarCircle>
 
         {/* Заголовок */}
         <Title level={3} style={{ margin: 0 }}>
@@ -59,35 +79,28 @@ export const LoginPage = () => {
         </Text>
 
         {/* Форма */}
-        <div className="w-full">
+        <FullWidth>
           <LoginForm />
-        </div>
+        </FullWidth>
 
         {/* Разделитель */}
         <Divider style={{ margin: '24px 0' }} />
 
         {/* Ссылки */}
-        <Space direction="vertical" size="middle" className="w-full">
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <Text>
             Нет аккаунта?{' '}
-            <Link 
-              to="/register" 
-              className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
-            >
+            <StyledLink to="/register">
               Создать аккаунт
-            </Link>
+            </StyledLink>
           </Text>
-          
           <Text type="secondary">
-            <Link 
-              to="/forgot-password" 
-              className="hover:text-gray-800 transition-colors duration-200"
-            >
+            <StyledLink to="/forgot-password">
               Забыли пароль?
-            </Link>
+            </StyledLink>
           </Text>
         </Space>
-      </Card>
-    </div>
+      </StyledCard>
+    </PageWrapper>
   );
 };

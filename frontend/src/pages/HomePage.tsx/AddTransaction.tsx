@@ -3,6 +3,235 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import type { FormEvent } from 'react';
 import Header from '../../components/Header';
 import Breadcrumbs from '../../components/Breadcrumbs';
+import styled from 'styled-components';
+
+const PageContainer = styled.div`
+  min-height: 100vh;
+  min-width: 208vh;
+  background: #f8fafc;
+`;
+
+const PageHeader = styled.header`
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+`;
+
+const HeaderContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const BackButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin-right: 1rem;
+  color: #4b5563;
+  transition: color 0.2s;
+  font-size: 1.5rem;
+  line-height: 1;
+
+  &:hover {
+    color: #059669;
+  }
+`;
+
+const MainNav = styled.nav`
+  display: flex;
+  gap: 1rem;
+`;
+
+const NavLink = styled(Link)`
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #4b5563;
+  text-decoration: none;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #059669;
+  }
+`;
+
+const AuthButtons = styled.div`
+  display: flex;
+  gap: 0.75rem;
+`;
+
+const LoginBtn = styled.button`
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  color: #4b5563;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    color: #111827;
+  }
+`;
+
+const RegisterBtn = styled.button`
+  padding: 0.5rem 1rem;
+  background: linear-gradient(to right, #10b981, #059669);
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    background: linear-gradient(to right, #0ea472, #047857);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const FormContainer = styled.div`
+  max-width: 28rem;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+`;
+
+const CategoryManagement = styled.div`
+  background: #f1f5f9;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+
+  h2 {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #334155;
+    margin-bottom: 0.5rem;
+  }
+`;
+
+const CategoryInput = styled.div`
+  display: flex;
+  gap: 0.5rem;
+
+  input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.25rem;
+    font-size: 1rem;
+  }
+
+  button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #1d4ed8;
+    }
+  }
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 1rem;
+
+  label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #334155;
+    margin-bottom: 0.25rem;
+  }
+
+  select,
+  input,
+  textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.25rem;
+    font-size: 1rem;
+  }
+
+  textarea {
+    min-height: 6rem;
+  }
+
+  &.error input,
+  &.error select,
+  &.error textarea {
+    border-color: #dc2626;
+  }
+`;
+
+const ErrorMessage = styled.span`
+  display: block;
+  font-size: 0.75rem;
+  color: #dc2626;
+  margin-top: 0.25rem;
+`;
+
+const FormActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+`;
+
+const CancelBtn = styled.button`
+  padding: 0.5rem 1rem;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #334155;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+`;
+
+const SubmitBtn = styled.button`
+  padding: 0.5rem 1rem;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #1d4ed8;
+  }
+`;
 
 export default function AddTransactionPage() {
   const { id: groupId } = useParams();
@@ -85,43 +314,41 @@ export default function AddTransactionPage() {
   };
 
   return (
-    <div className="page-container">
+    <PageContainer>
       {/* Верхнее меню */}
-      <header className="page-header">
-        <div className="header-container">
-          <button onClick={handleGoBack} className="back-button">
+      <PageHeader>
+        <HeaderContainer>
+          <BackButton onClick={handleGoBack}>
             ← {/* Символ стрелки */}
-          </button>
+          </BackButton>
           
-        
-          <nav className="main-nav">
+          <MainNav>
             {navItems.map((item) => (
-              <Link
+              <NavLink
                 key={item.path}
                 to={item.path}
-                className="nav-link"
               >
                 {item.name}
-              </Link>
+              </NavLink>
             ))}
-          </nav>
+          </MainNav>
 
-          <div className="auth-buttons">
-            <button className="login-btn">Вход</button>
-            <button className="register-btn">Регистрация</button>
-          </div>
-        </div>
-      </header>
+          <AuthButtons>
+            <LoginBtn>Вход</LoginBtn>
+            <RegisterBtn>Регистрация</RegisterBtn>
+          </AuthButtons>
+        </HeaderContainer>
+      </PageHeader>
      
       <Header />
       <Breadcrumbs />
        
-      <div className="form-container">
+      <FormContainer>
         <h1>Добавить транзакцию</h1>
 
-        <div className="category-management">
+        <CategoryManagement>
           <h2>Добавить категорию</h2>
-          <div className="category-input">
+          <CategoryInput>
             <input
               type="text"
               value={newCategory}
@@ -131,308 +358,61 @@ export default function AddTransactionPage() {
             <button onClick={handleAddCategory} type="button">
               Добавить
             </button>
-          </div>
-        </div>
+          </CategoryInput>
+        </CategoryManagement>
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
+          <FormGroup className={errors.category ? 'error' : ''}>
             <label>Категория</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className={errors.category ? 'error' : ''}
             >
               <option value="">Выберите категорию</option>
               {categories.map((cat, index) => (
                 <option key={index} value={cat}>{cat}</option>
               ))}
             </select>
-            {errors.category && <span className="error-message">{errors.category}</span>}
-          </div>
+            {errors.category && <ErrorMessage>{errors.category}</ErrorMessage>}
+          </FormGroup>
 
-          <div className="form-group">
+          <FormGroup className={errors.amount ? 'error' : ''}>
             <label>Сумма (₽)</label>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className={errors.amount ? 'error' : ''}
               placeholder="500"
               min="0"
               step="0.01"
             />
-            {errors.amount && <span className="error-message">{errors.amount}</span>}
-          </div>
+            {errors.amount && <ErrorMessage>{errors.amount}</ErrorMessage>}
+          </FormGroup>
 
-          <div className="form-group">
+          <FormGroup className={errors.description ? 'error' : ''}>
             <label>Описание</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className={errors.description ? 'error' : ''}
               placeholder="Детали транзакции..."
             />
-            {errors.description && <span className="error-message">{errors.description}</span>}
-          </div>
+            {errors.description && <ErrorMessage>{errors.description}</ErrorMessage>}
+          </FormGroup>
 
-          <div className="form-actions">
-            <button
+          <FormActions>
+            <CancelBtn
               type="button"
               onClick={() => groupId ? navigate(`/group/${groupId}`) : navigate('/')}
-              className="cancel-btn"
             >
               Отмена
-            </button>
-            <button type="submit" className="submit-btn">
+            </CancelBtn>
+            <SubmitBtn type="submit">
               Сохранить
-            </button>
-          </div>
+            </SubmitBtn>
+          </FormActions>
         </form>
-      </div>
-
-      <style jsx>{`
-        .page-container {
-          min-height: 100vh;
-          min-width: 208vh; 
-          background: #f8fafc;
-        }
-
-        /* Стили для верхнего меню */
-        .page-header {
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(12px);
-          position: sticky;
-          top: 0;
-          z-index: 40;
-          border-bottom: 1px solid #e5e7eb;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .header-container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0.75rem 1rem;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        /* Стили для кнопки назад */
-        .back-button {
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 0.5rem;
-          margin-right: 1rem;
-          color: #4b5563;
-          transition: color 0.2s;
-          font-size: 1.5rem;
-          line-height: 1;
-        }
-
-        .back-button:hover {
-          color: #059669;
-        }
-
-        .logo-link {
-          display: flex;
-          align-items: center;
-          text-decoration: none;
-        }
-
-        .logo {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #059669;
-        }
-
-        .main-nav {
-          display: flex;
-          gap: 1rem;
-        }
-
-        .nav-link {
-          padding: 0.5rem 1rem;
-          font-size: 1rem;
-          font-weight: 500;
-          color: #4b5563;
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-
-        .nav-link:hover {
-          color: #059669;
-        }
-
-        .auth-buttons {
-          display: flex;
-          gap: 0.75rem;
-        }
-
-        .login-btn {
-          padding: 0.5rem 1rem;
-          background: transparent;
-          border: none;
-          color: #4b5563;
-          font-weight: 500;
-          cursor: pointer;
-        }
-
-        .login-btn:hover {
-          color: #111827;
-        }
-
-        .register-btn {
-          padding: 0.5rem 1rem;
-          background: linear-gradient(to right, #10b981, #059669);
-          color: white;
-          border: none;
-          border-radius: 0.375rem;
-          font-weight: 500;
-          cursor: pointer;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        .register-btn:hover {
-          background: linear-gradient(to right, #0ea472, #047857);
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Стили для формы */
-        .form-container {
-          max-width: 28rem;
-          margin: 2rem auto;
-          padding: 2rem;
-          background: white;
-          border-radius: 0.5rem;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .form-container h1 {
-          font-size: 1.5rem;
-          font-weight: 600;
-          color: #1e293b;
-          text-align: center;
-          margin-bottom: 1.5rem;
-        }
-
-        .category-management {
-          background: #f1f5f9;
-          padding: 1rem;
-          border-radius: 0.375rem;
-          margin-bottom: 1.5rem;
-          border: 1px solid #e2e8f0;
-        }
-
-        .category-management h2 {
-          font-size: 1rem;
-          font-weight: 500;
-          color: #334155;
-          margin-bottom: 0.5rem;
-        }
-
-        .category-input {
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        .category-input input {
-          flex: 1;
-          padding: 0.5rem;
-          border: 1px solid #cbd5e1;
-          border-radius: 0.25rem;
-          font-size: 1rem;
-        }
-
-        .category-input button {
-          background: #2563eb;
-          color: white;
-          border: none;
-          padding: 0.5rem 1rem;
-          border-radius: 0.25rem;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-
-        .category-input button:hover {
-          background: #1d4ed8;
-        }
-
-        .form-group {
-          margin-bottom: 1rem;
-        }
-
-        .form-group label {
-          display: block;
-          font-size: 0.875rem;
-          font-weight: 500;
-          color: #334155;
-          margin-bottom: 0.25rem;
-        }
-
-        .form-group select,
-        .form-group input,
-        .form-group textarea {
-          width: 100%;
-          padding: 0.5rem;
-          border: 1px solid #cbd5e1;
-          border-radius: 0.25rem;
-          font-size: 1rem;
-        }
-
-        .form-group textarea {
-          min-height: 6rem;
-        }
-
-        .error {
-          border-color: #dc2626;
-        }
-
-        .error-message {
-          display: block;
-          font-size: 0.75rem;
-          color: #dc2626;
-          margin-top: 0.25rem;
-        }
-
-        .form-actions {
-          display: flex;
-          justify-content: flex-end;
-          gap: 0.75rem;
-          margin-top: 1.5rem;
-          padding-top: 1rem;
-          border-top: 1px solid #e2e8f0;
-        }
-
-        .cancel-btn {
-          padding: 0.5rem 1rem;
-          border: 1px solid #cbd5e1;
-          background: white;
-          color: #334155;
-          border-radius: 0.25rem;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-
-        .cancel-btn:hover {
-          background: #f1f5f9;
-        }
-
-        .submit-btn {
-          padding: 0.5rem 1rem;
-          background: #2563eb;
-          color: white;
-          border: none;
-          border-radius: 0.25rem;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-
-        .submit-btn:hover {
-          background: #1d4ed8;
-        }
-      `}</style>
-    </div>
+      </FormContainer>
+    </PageContainer>
   );
 }

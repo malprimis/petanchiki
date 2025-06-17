@@ -7,7 +7,6 @@ from app.db.base import Base
 from app.core.config import settings
 from app.db.session import (
     async_engine,
-    get_db,
 )
 from app.api.v1.endpoints import (
     auth,
@@ -24,6 +23,7 @@ async def lifespan(app: FastAPI):
     # 1) Создаём таблицы (только в dev; в prod — миграции через Alembic)
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
     yield
     # === shutdown ===
     # Например, закрыть соединение с БД
@@ -38,7 +38,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS: по умолчанию пустой список, указывайте URL вашего фронтенда в .env
+# CORS: по умолчанию пустой список
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,

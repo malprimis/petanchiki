@@ -1,3 +1,6 @@
+// вообще под снос, будет одна кнопка со скачиванием pdf файла
+
+
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
@@ -70,7 +73,7 @@ const ReportsPage = () => {
       await new Promise(resolve => setTimeout(resolve, 800));
       
       // Моковые данные
-      // Нет вообще запроса 
+      // Нет вообще запроса, а ручка ещё не написана
       const mockCategoryData: CategoryData[] = [
         { name: 'Продукты', value: 400 },
         { name: 'Транспорт', value: 300 },

@@ -4,6 +4,7 @@ import type { FormEvent } from 'react';
 import Header from '../../components/Header';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import styled from 'styled-components';
+import { addCategory, addTransaction, getCategories } from '../../api/transaction';
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -248,6 +249,18 @@ export default function AddTransactionPage() {
   const [categories, setCategories] = useState<string[]>(['Другое']);
   const [newCategory, setNewCategory] = useState('');
 
+  //функция получения уже имеющихся категорий с бека
+  const fetchCategories = async () => {
+    try{
+      const fetchedCategories = await getCategories(groupId ?? "")
+      setCategories([...categories, fetchedCategories])
+    }
+    catch {
+      console.log('fetchCategories error');
+      
+    }
+  }
+  fetchCategories()
   // Навигационное меню
   const navItems = [
     { path: '/home', name: 'Главная' },
@@ -260,6 +273,7 @@ export default function AddTransactionPage() {
     navigate(-1); // Возврат на предыдущую страницу в истории
   };
 
+  //можно было использовать useForm 
   const validateForm = () => {
     let isValid = true;
     const newErrors = {
@@ -287,27 +301,40 @@ export default function AddTransactionPage() {
     return isValid;
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     if (validateForm()) {
-      console.log('Данные для сохранения:', {
-        category,
+      try{
+      await addTransaction(groupId ?? "",{
+        categoryId: category,
         amount: Number(amount),
-        description,
-        date,
-        groupId: groupId ? Number(groupId) : 0
-      });
-
+        description: description,
+        date: date,
+        groupId: groupId ?? ""
+      });}
+      catch{
+        console.log("Submit error");
+        
+      }
       if (groupId) {
         navigate(`/group/${groupId}`);
       }
     }
+  
+
   };
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     const trimmed = newCategory.trim();
     if (trimmed && !categories.includes(trimmed)) {
+      try{
+        await addCategory(groupId ?? "", {name: newCategory})
+      }
+      catch{
+        console.log('handleAddCategory error');
+        
+      }
       setCategories([...categories, trimmed]);
       setNewCategory('');
     }

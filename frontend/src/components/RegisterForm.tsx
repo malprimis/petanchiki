@@ -13,7 +13,7 @@ export const RegisterForm = () => {
       const response = await register(email, password, name);
       localStorage.setItem('token', response.token);
       navigate('/');
-    } catch (err) {
+    } catch {
       setError('Ошибка регистрации');
     }
   };

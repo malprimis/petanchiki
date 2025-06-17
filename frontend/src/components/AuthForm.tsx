@@ -25,6 +25,8 @@ export const AuthForm = (props: AuthFormProps) => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+
+   //сделать запрос 1. Auth
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -37,7 +39,7 @@ export const AuthForm = (props: AuthFormProps) => {
       setError('Пароль должен содержать минимум 6 символов');
       return;
     }
-
+    
     try {
       if (props.type === 'register') {
         // Для регистрации передаём все три параметра

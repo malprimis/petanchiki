@@ -7,6 +7,8 @@ interface AuthResponse {
   };
 }
 
+
+//правильно
 export const login = async (email: string, password: string): Promise<AuthResponse> => {
   const response = await fetch('/auth/login', {
     method: 'POST',
@@ -23,6 +25,8 @@ export const login = async (email: string, password: string): Promise<AuthRespon
   return response.json();
 };
 
+
+//правильно
 export const register = async (email: string, password: string, name: string): Promise<AuthResponse> => {
   const response = await fetch('/auth/register', {
     method: 'POST',

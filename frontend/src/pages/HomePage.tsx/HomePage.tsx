@@ -221,16 +221,6 @@ const GroupHeader = styled.div`
   }
 `;
 
-//не используется, возможно посеялось при переписывании
-const MembersCount = styled.div`
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border-radius: 9999px;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-`;
-
 const GroupBalance = styled.div`
   font-size: 1.5rem;
   font-weight: 700;

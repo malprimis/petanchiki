@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.security import get_current_active_user
 from app.db.base import GroupRole
 from app.db.session import get_db
 from app.models.user import User as UserModel
@@ -12,7 +13,6 @@ from app.schemas.group import (
     GroupUpdate,
     UserGroupRead,
 )
-from app.core.security import get_current_active_user, get_current_active_admin
 from app.services.group_service import (
     create_group,
     get_group_by_id as svc_get_group,

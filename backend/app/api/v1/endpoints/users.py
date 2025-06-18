@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.security import get_current_active_user, get_current_active_admin
 from app.db.session import get_db
 from app.models.user import User as UserModel
 from app.schemas.user import (
@@ -10,7 +11,6 @@ from app.schemas.user import (
     UserRead,
     UserUpdate
 )
-from app.core.security import get_current_active_user, get_current_active_admin
 from app.services.user_service import (
     create_user,
     get_user_by_id as svc_get_user,

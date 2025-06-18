@@ -19,7 +19,7 @@ from app.db.base import TransactionType
 from app.models.transaction import Transaction
 from app.services.category_service import get_category_by_id
 from app.services.user_service import get_user_by_id
-from app.schemas.report import ReportRequest
+from app.schemas.report import ReportPdfRequest
 
 # Регистрация шрифта для кириллицы
 FONT_PATH = Path(__file__).parent.parent / "static" / "fonts" / "DejaVuSans.ttf"
@@ -40,7 +40,7 @@ GREY_OTHER = colors.HexColor("#666666")
 
 async def generate_report_data(
     db: AsyncSession,
-    req: ReportRequest
+    req: ReportPdfRequest
 ) -> Dict[str, Any]:
     filters = []
     if req.date_from:
@@ -85,7 +85,7 @@ async def generate_report_data(
 
 async def generate_report_pdf(
     db: AsyncSession,
-    req: ReportRequest
+    req: ReportPdfRequest
 ) -> Path:
     data = await generate_report_data(db, req)
     report_id = uuid.uuid4()

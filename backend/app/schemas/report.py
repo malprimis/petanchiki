@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from pydantic_settings import SettingsConfigDict
 
 
-class ReportRequest(BaseModel):
+class ReportPdfRequest(BaseModel):
     group_id: UUID
     date_from: Optional[date] = None
     date_to: Optional[date] = None
@@ -28,7 +28,7 @@ class ReportRequest(BaseModel):
     )
 
 
-class ReportData(BaseModel):
+class ReportPdfData(BaseModel):
     by_category: Optional[dict[str, float]] = None
     by_user: Optional[dict[str, float]] = None
     total_expense: float

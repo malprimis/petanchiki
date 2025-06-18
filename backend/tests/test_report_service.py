@@ -13,7 +13,7 @@ from app.schemas.user import UserCreate
 from app.schemas.group import GroupCreate
 from app.schemas.category import CategoryCreate
 from app.schemas.transaction import TransactionCreate
-from app.schemas.report import ReportRequest
+from app.schemas.report import ReportPdfRequest
 from app.services.user_service import create_user
 from app.services.group_service import create_group
 from app.services.category_service import create_category
@@ -59,7 +59,7 @@ async def test_generate_report_data(async_session: AsyncSession):
         date=datetime(2025, 1, 2)
     ), author_id=user.id)
 
-    req = ReportRequest(group_id=group.id)
+    req = ReportPdfRequest(group_id=group.id)
     data = await generate_report_data(async_session, req)
 
     assert data["total_income"] == 1000
@@ -99,7 +99,7 @@ async def test_generate_report_pdf(async_session: AsyncSession):
         date=datetime(2025, 1, 2)
     ), author_id=user.id)
 
-    req = ReportRequest(group_id=group.id)
+    req = ReportPdfRequest(group_id=group.id)
     path = await generate_report_pdf(async_session, req)
 
     assert Path(path).exists()

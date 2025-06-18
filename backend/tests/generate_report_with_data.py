@@ -14,7 +14,7 @@ from app.models.user import User
 from app.models.group import Group
 from app.models.category import Category
 from app.models.transaction import Transaction
-from app.schemas.report import ReportRequest
+from app.schemas.report import ReportPdfRequest
 from app.services.report_service import generate_report_data, generate_report_pdf
 from app.db.base import Base
 
@@ -120,12 +120,12 @@ async def main():
 
         print("📊 Генерация данных отчёта...")
 
-        from app.schemas.report import ReportRequest
+        from app.schemas.report import ReportPdfRequest
 
         today = date.today()
         thirty_days_ago = today - timedelta(days=30)
 
-        req = ReportRequest(
+        req = ReportPdfRequest(
             group_id=data["group"].id,
             by_category=True,
             by_user=True,

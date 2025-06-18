@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.db.base import Base
 from app.core.config import settings
 from app.db.session import (
     async_engine,
@@ -14,19 +13,20 @@ from app.api.v1.endpoints import (
     groups,
     categories,
     transactions,
-    # reports  ← оставим коллегам
 )
+
+from app.utils.logger import setup_logging
+
+setup_logging()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # === startup ===
-    # 1) Создаём таблицы (только в dev; в prod — миграции через Alembic)
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+
+    # async with async_engine.begin() as conn:
+    #     await conn.run_sync(Base.metadata.create_all)
 
     yield
-    # === shutdown ===
-    # Например, закрыть соединение с БД
+
     await async_engine.dispose()
 
 app = FastAPI(
@@ -54,8 +54,6 @@ app.include_router(groups.router,      prefix="/api/v1")
 # категории и транзакции — пути уже внутри роутеров включают /groups или /transactions
 app.include_router(categories.router,  prefix="/api/v1")
 app.include_router(transactions.router,prefix="/api/v1")
-# reports остаётся за другим разработчиком:
-# app.include_router(reports.router, prefix="/api/v1/reports")
 
 
 @app.get("/", tags=["Root"])

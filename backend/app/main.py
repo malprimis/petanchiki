@@ -23,6 +23,7 @@ async def lifespan(app: FastAPI):
     # === startup ===
     # 1) Создаём таблицы (только в dev; в prod — миграции через Alembic)
     async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
     # === shutdown ===

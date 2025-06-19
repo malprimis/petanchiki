@@ -11,6 +11,8 @@ export const RegisterForm = () => {
     try {
       setError('');
       const response = await register(email, password, name);
+      console.log(response);
+      
       localStorage.setItem('token', response.token);
       navigate('/');
     } catch {

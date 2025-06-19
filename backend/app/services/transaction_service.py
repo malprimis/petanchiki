@@ -19,6 +19,17 @@ async def create_transaction(
         tx_in: TransactionCreate,
         author_id: uuid.UUID
 ) -> Transaction:
+    """
+    Создаёт новую транзакцию.
+
+    :param db: асинхронная сессия SQLAlchemy
+    :param tx_in: входные данные транзакции
+    :param author_id: UUID автора транзакции
+    :return: созданный объект Transaction
+    :raises HTTPException 403: если пользователь не состоит в группе
+    :raises HTTPException 400: если категория не найдена в группе
+    """
+
     membership = await db.execute(
         select(UserGroup)
         .filter(UserGroup.group_id == tx_in.group_id,
@@ -57,6 +68,14 @@ async def get_transaction_by_id(
         db: AsyncSession,
         tx_id: uuid.UUID
 ) -> Transaction:
+    """
+    Возвращает транзакцию по её UUID.
+
+    :param db: асинхронная сессия SQLAlchemy
+    :param tx_id: UUID транзакции
+    :return: объект Transaction
+    :raises HTTPException 404: если транзакция не найдена
+    """
 
     result = await db.execute(
         select(Transaction)
@@ -77,6 +96,20 @@ async def list_transactions(
         date_to: datetime | None = None,
         tx_type: TransactionType | None = None
 ) -> Sequence[Transaction]:
+    """
+    Возвращает список транзакций в группе.
+
+    :param db: асинхронная сессия SQLAlchemy
+    :param group_id: UUID группы
+    :param skip: сколько записей пропустить
+    :param limit: максимум транзакций
+    :param user_id: UUID пользователя
+    :param category_id: UUID категории
+    :param date_from: Дата "от"
+    :param date_to: Дата "до"
+    :param tx_type: Тип транзакции
+    :return: список объектов Transaction
+    """
 
     stmt = select(Transaction).filter(Transaction.group_id == group_id)
 
@@ -101,6 +134,12 @@ async def check_transaction_permission(
         tx: Transaction,
         user_id: uuid.UUID
 ) -> bool:
+    """
+    Проверка, может ли пользователь взаимодействовать с транзакцией.
+
+    :param db: асинхронная сессия SQLAlchemy
+    :param tx: Транзакция
+    """
 
     if tx.user_id == user_id:
         return True
@@ -114,6 +153,16 @@ async def update_transaction(
         tx_in: TransactionUpdate,
         current_user_id: uuid.UUID
 ) -> Transaction:
+    """
+    Обновляет данные транзакции.
+
+    :param db: асинхронная сессия SQLAlchemy
+    :param transaction_id: UUID транзакции
+    :param tx_in: новые данные транзакции
+    :return: обновлённый объект Transaction
+    :raises HTTPException 404: если транзакция не найдена
+    """
+
     if not await check_transaction_permission(db, tx, current_user_id):
         raise HTTPException(status_code=403, detail='forbidden')
 
@@ -156,6 +205,13 @@ async def delete_transaction(
         tx: Transaction,
         current_user_id: uuid.UUID
 ) -> None:
+    """
+    Удаляет транзакцию по UUID.
+
+    :param db: асинхронная сессия SQLAlchemy
+    :param transaction_id: UUID транзакции
+    :raises HTTPException 404: если транзакция не найдена
+    """
 
     check_permission = await check_transaction_permission(db, tx, current_user_id)
 

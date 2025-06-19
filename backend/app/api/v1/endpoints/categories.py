@@ -2,12 +2,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from watchfiles import awatch
 
+from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User as UserModel
 from app.schemas.category import CategoryCreate, CategoryRead, CategoryUpdate
-from app.core.security import get_current_active_user, get_current_active_admin
 from app.services.category_service import (
     create_category as svc_create_category,
     list_categories_for_group as svc_list_categories,

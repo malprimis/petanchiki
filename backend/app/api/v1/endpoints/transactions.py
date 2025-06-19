@@ -1,16 +1,22 @@
 
-from uuid import UUID
 from datetime import date
-from typing import List, Optional
+from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.security import get_current_active_user
 from app.db.base import TransactionType
 from app.db.session import get_db
-from app.core.security import get_current_active_user, get_current_active_admin
-from app.services.group_service import is_user_member_in_group
+from app.models.user import User as UserModel
+from app.schemas.transaction import (
+    TransactionCreate,
+    TransactionRead,
+    TransactionUpdate,
+)
 from app.services.category_service import get_category_by_id
+from app.services.group_service import is_user_member_in_group
 from app.services.transaction_service import (
     create_transaction as svc_create,
     get_transaction_by_id as svc_get,
@@ -19,12 +25,6 @@ from app.services.transaction_service import (
     delete_transaction as svc_delete,
     check_transaction_permission,
 )
-from app.schemas.transaction import (
-    TransactionCreate,
-    TransactionRead,
-    TransactionUpdate,
-)
-from app.models.user import User as UserModel
 
 router = APIRouter(
     tags=["Transactions"]

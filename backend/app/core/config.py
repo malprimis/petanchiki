@@ -3,7 +3,7 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-BASE_DIR = Path(__file__).parent.parent.parent  # теперь это .../backend
+BASE_DIR = Path(__file__).parent.parent.parent.parent  # теперь это .../backend
 ENV_PATH = BASE_DIR / ".env"
 
 
@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     OPENAPI_URL: str = "/api/v1/openapi.json"
     DOCS_URL: str | None = "/docs"
     REDOC_URL: str | None = "/redoc"
-    BACKEND_CORS_ORIGINS: list[str] = []
+    BACKEND_CORS_ORIGINS: list[str] = ['*']
     HOST: str = "localhost"
     PORT: int = 8000
     DEBUG: bool = True

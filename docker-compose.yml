@@ -1,13 +1,11 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-test}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-test}
-      POSTGRES_DB: ${POSTGRES_DB:-app_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASS: ${DB_PASS:-postgres}
+      DB_NAME: ${DB_NAME:-petanchiki}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -15,13 +13,15 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ./
       dockerfile: ./backend/.docker/Dockerfile
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
-      - ./backend/app:/app/app
+      - ./app:/app/app
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql+asyncpg://${DB_USER}:${DB_PASS}@db:5432/${DB_NAME}
       SECRET_KEY: ${SECRET_KEY}
     ports:
       - "8000:8000"
@@ -30,7 +30,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./
       dockerfile: ./frontend/.docker/Dockerfile
     command: yarn start
     volumes:

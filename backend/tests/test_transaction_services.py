@@ -124,7 +124,7 @@ async def test_transaction_permission(async_session: AsyncSession):
     # Other (not in a group) cannot
     assert not await check_transaction_permission(async_session, tx, other.id)
     # Add other as member
-    await add_user_to_group(async_session, group.id, other.id)
+    await add_user_to_group(async_session, group.id, other.email)
     assert await check_transaction_permission(async_session, tx, other.id) == False
     # Promote to admin
     await change_user_role_in_group(async_session, group.id, other.id, new_role=GroupRole.admin, current_user=owner)

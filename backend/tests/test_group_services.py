@@ -92,7 +92,7 @@ async def test_add_change_remove_member(async_session: AsyncSession):
     ), owner.id)
 
     # Добавляем участника
-    membership = await add_user_to_group(async_session, group.id, member.id, role="member")
+    membership = await add_user_to_group(async_session, group.id, member.email, role="member")
     assert membership.group_id == group.id
     assert membership.user_id == member.id
     assert membership.role == GroupRole.member

@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Sequence
 
 from fastapi import HTTPException
+from pydantic import EmailStr
 from sqlalchemy import select, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -12,6 +13,7 @@ from app.models.group import Group
 from app.models.user import User
 from app.models.user_group import UserGroup
 from app.schemas.group import GroupCreate, GroupUpdate
+from app.services.user_service import get_user_by_email
 
 
 async def create_group(
@@ -248,7 +250,7 @@ async def delete_group(
 async def add_user_to_group(
         db: AsyncSession,
         group_id: uuid.UUID,
-        user_id: uuid.UUID,
+        email: str,
         role: GroupRole = GroupRole.member
 ) -> UserGroup:
     """Invite a user to a group or promote them directly to a given *role*.
@@ -287,16 +289,13 @@ async def add_user_to_group(
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
 
-    user_stmt = await db.execute(
-        select(User).filter(User.id == user_id, User.is_active == True)  # noqa: E712
-    )
-    user = user_stmt.scalars().first()
+    user = await get_user_by_email(db, email)
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     exists_stmt = await db.execute(
-        select(UserGroup).filter(UserGroup.user_id == user_id, UserGroup.group_id == group_id)
+        select(UserGroup).filter(UserGroup.user_id == user.id, UserGroup.group_id == group_id)
     )
     exists = exists_stmt.scalars().first()
 
@@ -305,7 +304,7 @@ async def add_user_to_group(
 
     membership = UserGroup(
         group_id=group_id,
-        user_id=user_id,
+        user_id=user.id,
         role=role,
         joined_at=datetime.now()
     )

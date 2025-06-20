@@ -125,7 +125,7 @@ async def delete_group(
 )
 async def add_member(
         group_id: UUID,
-        email: EmailStr,
+        email: EmailStr | str,
         role: GroupRole = GroupRole.member,
         db: AsyncSession = Depends(get_db),
 ):

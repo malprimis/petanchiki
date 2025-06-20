@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 from app.db.base import GroupRole
 from app.schemas.user import UserRead
@@ -29,6 +29,10 @@ class GroupRead(GroupBase):
 class GroupUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
+
+class GroupAddUser(BaseModel):
+    email: EmailStr
+    role: GroupRole = GroupRole.member
 
 
 class UserGroupBase(BaseModel):

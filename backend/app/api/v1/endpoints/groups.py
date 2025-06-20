@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_active_user
@@ -124,11 +125,11 @@ async def delete_group(
 )
 async def add_member(
         group_id: UUID,
-        user_id: UUID,
+        email: EmailStr,
         role: GroupRole = GroupRole.member,
         db: AsyncSession = Depends(get_db),
 ):
-    membership = await svc_add_user(db, group_id, user_id, role)
+    membership = await svc_add_user(db, group_id, email, role)
     return membership
 
 

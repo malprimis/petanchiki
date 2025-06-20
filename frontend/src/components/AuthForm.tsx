@@ -75,6 +75,7 @@ export const AuthForm = (props: AuthFormProps) => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full p-2 border rounded"
+
             required
           />
         </div>
@@ -88,6 +89,7 @@ export const AuthForm = (props: AuthFormProps) => {
           onChange={(e) => setEmail(e.target.value)}
           className="w-full p-2 border rounded"
           required
+          autoComplete='email'
         />
       </div>
       
@@ -100,6 +102,7 @@ export const AuthForm = (props: AuthFormProps) => {
           className="w-full p-2 border rounded"
           required
           minLength={6}
+          autoComplete='current-password'
         />
       </div>
       

@@ -1,23 +1,10 @@
+import { Loading3QuartersOutlined } from '@ant-design/icons';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
+import { getGroupById } from '../api/group';
+import type { Group } from '../types/types';
 
-interface Transaction {
-  id: number;
-  date: string;
-  category: string;
-  amount: number;
-  member: string;
-}
-
-interface Group {
-  id: number;
-  name: string;
-  balance: number;
-  members: string[];
-  transactions: Transaction[];
-  color: string;
-}
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -133,11 +120,11 @@ const Header = styled.div`
   }
 `;
 
-const Balance = styled.div`
-  font-size: 1.25rem;
-  color: #334155;
-  font-weight: 500;
-`;
+// const Balance = styled.div`
+//   font-size: 1.25rem;
+//   color: #334155;
+//   font-weight: 500;
+// `;
 
 const Section = styled.div`
   margin-bottom: 2rem;
@@ -189,65 +176,65 @@ const AddTransactionBtn = styled.button`
   }
 `;
 
-const TransactionsTable = styled.div`
-  background: white;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+// const TransactionsTable = styled.div`
+//   background: white;
+//   border-radius: 0.5rem;
+//   overflow: hidden;
+//   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+//   color: black;
+
+//   table {
+//     width: 100%;
+//     border-collapse: collapse;
+//   }
+
+//   th, td {
+//     padding: 1rem;
+//     text-align: left;
+//     border-bottom: 1px solid #e2e8f0;
+//   }
+
+//   th {
+//     background: #f1f5f9;
+//     font-weight: 600;
+//     color: #334155;
+//   }
+
+//   tr:hover {
+//     background: #f8fafc;
+//   }
+// `;
+
+// const NoTransactions = styled.p`
+//   color: #64748b;
+//   font-style: italic;
+//   text-align: center;
+//   padding: 1rem;
+// `;
+
+const Loading = styled.h1`
   color: black;
+  justify-self: center;
+  align-self: center;
+`
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  th, td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid #e2e8f0;
-  }
-
-  th {
-    background: #f1f5f9;
-    font-weight: 600;
-    color: #334155;
-  }
-
-  tr:hover {
-    background: #f8fafc;
-  }
-`;
-
-const NoTransactions = styled.p`
-  color: #64748b;
-  font-style: italic;
-  text-align: center;
-  padding: 1rem;
-`;
-
-const LoadingContainer = styled.div`
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.5rem;
-  color: #64748b;
-`;
-
-const NotFound = styled.div`
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.5rem;
-  color: #64748b;
-`;
 
 export default function GroupNew() {
-  const { id } = useParams<{ id: string }>();
+  const { id  } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [group, setGroup] = useState<Group | null>(null);
-  const [loading, setLoading] = useState(true); // Добавлено состояние загрузки
+  useEffect(() => {
+    const fetchGroup = async () => {
+      try {
+        const data = await getGroupById(id ?? "") ;
+        setGroup(data);
+        localStorage.setItem('groups', data)
+      } catch {
+        setGroup(null);
+      }
+    };
+    fetchGroup();
+  }, []);
 
   // Навигационное меню
   const navItems = [
@@ -255,62 +242,6 @@ export default function GroupNew() {
     { path: '/who', name: 'Отчеты' },
     { path: '/features', name: 'Группы' },
   ];
-
-  useEffect(() => {
-    const loadGroup = () => {
-      try {
-        const savedGroups = JSON.parse(localStorage.getItem('groups') || '[]');
-        console.log('Loaded groups:', savedGroups);
-        
-        // Исправлено: явное преобразование id в число
-        const foundGroup = savedGroups.find((g: Group) => g.id === Number(id));
-        console.log('Found group:', foundGroup);
-        
-        if (foundGroup) {
-          // Проверка и нормализация транзакций
-          const normalizedTransactions = foundGroup.transactions.map((t: Transaction) => ({
-            ...t,
-            date: t.date || 'Не указана',
-            category: t.category || 'Без категории',
-            amount: Number(t.amount) || 0,
-            member: t.member || 'Не указан'
-          }));
-          
-          setGroup({
-            ...foundGroup,
-            transactions: normalizedTransactions
-          });
-        } else {
-          console.error('Группа не найдена');
-          navigate('/home');
-        }
-      } catch (error) {
-        console.error('Ошибка загрузки группы:', error);
-        navigate('/home');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadGroup();
-  }, [id, navigate]);
-
-  if (loading) {
-    return (
-      <LoadingContainer>
-        <p>Загрузка данных группы...</p>
-      </LoadingContainer>
-    );
-  }
-
-  if (!group) {
-    return (
-      <NotFound>
-        <p>Группа не найдена</p>
-      </NotFound>
-    );
-  }
-
   return (
     <PageContainer>
       <PageHeader>
@@ -334,64 +265,82 @@ export default function GroupNew() {
           </AuthButtons>
         </HeaderContainer>
       </PageHeader>
+      {group && (
+        <>
+          <GroupContent>
+            <Header>
+              <h1>{group.name}</h1>
+              {/* <Balance>Баланс: {group.balance} ₽</Balance> */}
+            </Header>
+            <Section>
+              <TransactionsHeader>
+                <h2>Список транзакций</h2>
+                <AddTransactionBtn onClick={() => navigate(`/group/${group.id}/add-transaction`)}>
+                  Добавить транзакцию
+                </AddTransactionBtn>
+              </TransactionsHeader>
 
-      <GroupContent>
-        <Header>
-          <h1>{group.name}</h1>
-          <Balance>Баланс: {group.balance} ₽</Balance>
-        </Header>
+              {/* {group.transactions.length > 0 ? (
+                <TransactionsTable>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Дата</th>
+                        <th>Категория</th>
+                        <th>Сумма</th>
+                        <th>Участник</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.transactions.map((transaction) => (
+                        <tr key={`transaction-${transaction.id}`}>
+                          <td>{transaction.date}</td>
+                          <td>{transaction.category}</td>
+                          <td>{transaction.amount} ₽</td>
+                          <td>{transaction.member}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </TransactionsTable>
+              ) : (
+                <NoTransactions>Транзакции не добавлены</NoTransactions>
+              )} */}
+            </Section>
+          </GroupContent>
+          
+          <Section>
+            <h2>Участники</h2>
+            <MembersList>
+              {group.members.length > 0 ? (
+                group.members.map((member, index) => (
+                  <MemberTag key={`member-${index}`}>
+                    {member}
+                  </MemberTag>
+                ))
+              ) : (
+                <p>Нет участников</p>
+              )}
+            </MembersList>
+          </Section>
 
-        <Section>
-          <h2>Участники</h2>
-          <MembersList>
-            {group.members.length > 0 ? (
-              group.members.map((member, index) => (
-                <MemberTag key={`member-${index}`}>
-                  {member}
-                </MemberTag>
-              ))
-            ) : (
-              <p>Нет участников</p>
-            )}
-          </MembersList>
-        </Section>
+          <Section>
+            <TransactionsHeader>
+              <h2>Список транзакций</h2>
+              <AddTransactionBtn onClick={() => navigate(`/group/${group.id}/add-transaction`)}>
+                Добавить транзакцию
+              </AddTransactionBtn>
+            </TransactionsHeader>
+          </Section>
+        </>
+      )}
+      {!group && (
+        <>
+          <Loading>Loading</Loading>
+          <Loading3QuartersOutlined color='#000'></Loading3QuartersOutlined>
+        </>
+      )}
 
-        <Section>
-          <TransactionsHeader>
-            <h2>Список транзакций</h2>
-            <AddTransactionBtn onClick={() => navigate(`/group/${group.id}/add-transaction`)}>
-              Добавить транзакцию
-            </AddTransactionBtn>
-          </TransactionsHeader>
-
-          {group.transactions.length > 0 ? (
-            <TransactionsTable>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Дата</th>
-                    <th>Категория</th>
-                    <th>Сумма</th>
-                    <th>Участник</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {group.transactions.map((transaction) => (
-                    <tr key={`transaction-${transaction.id}`}>
-                      <td>{transaction.date}</td>
-                      <td>{transaction.category}</td>
-                      <td>{transaction.amount} ₽</td>
-                      <td>{transaction.member}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </TransactionsTable>
-          ) : (
-            <NoTransactions>Транзакции не добавлены</NoTransactions>
-          )}
-        </Section>
-      </GroupContent>
     </PageContainer>
   );
 }

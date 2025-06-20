@@ -1,23 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
+import { createNewGroup } from '../api/group';
 
-interface Transaction {
-  id: number;
-  date: string;
-  category: string;
-  amount: number;
-  member: string;
-}
-
-interface Group {
-  id: number;
-  name: string;
-  balance: number;
-  members: string[];
-  transactions: Transaction[];
-  color: string;
-}
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -115,10 +100,13 @@ const RegisterBtn = styled.button`
 const GroupContent = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
 `;
 
 const Header = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid #e2e8f0;
@@ -131,73 +119,20 @@ const Header = styled.div`
 `;
 
 const Section = styled.div`
+  display: flex;
+  flex-direction: column;
   margin-bottom: 2rem;
   background: white;
+  color: #000;
   padding: 1.5rem;
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-
-  label {
-    display: block;
-    font-size: 1rem;
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    color: #334155;
-  }
+  font-size: 2rem;
 
   input {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 0.375rem;
-    font-size: 1rem;
-    margin-bottom: 1rem;
-
-    &:focus {
-      outline: none;
-      border-color: #059669;
-      box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
-    }
-  }
-`;
-
-const TransactionsHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-
-  h2 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1e293b;
-  }
-`;
-
-const AddTransactionBtn = styled.button`
-  background: #2563eb;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #1d4ed8;
-  }
-`;
-
-const TransactionFields = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-bottom: 1rem;
-
-  input {
-    padding: 0.5rem 1rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 0.375rem;
+    margin-top: 1rem;
+    font-size: 1.5rem;
+    padding: 0.5rem;
   }
 `;
 
@@ -242,73 +177,35 @@ export default function CreateGroupPage() {
 
   // Состояние формы
   const [name, setName] = useState('');
-  const [members, setMembers] = useState('');
-  const [balance, setBalance] = useState(0);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [transactionCount, setTransactionCount] = useState(0);
+  const [description, setDescription] = useState('')
 
   // Добавление поля транзакции
-  const addTransactionField = () => {
-    const newId = transactions.length + 1;
-    const newTransaction: Transaction = {
-      id: newId,
-      date: '',
-      category: '',
-      amount: 0,
-      member: ''
-    };
-    setTransactions([...transactions, newTransaction]);
-    setTransactionCount(transactionCount + 1);
-  };
 
   // Обработчики изменения полей транзакций
-  const handleTransactionChange = (
-    index: number,
-    field: keyof Transaction,
-    value: string | number
-  ) => {
-    const updated = [...transactions];
-    updated[index][field] = value as never;
-    setTransactions(updated);
-  };
-
   // Цвета для групп
-  const colors = ['group-color-1', 'group-color-2', 'group-color-3', 'group-color-4', 'group-color-5'];
+  //const colors = ['group-color-1', 'group-color-2', 'group-color-3', 'group-color-4', 'group-color-5'];
 
-  const handleSubmit = () => {
+  // Функция отправки формы
+  const handleSubmit = async () => {
     if (!name.trim()) {
       alert('Пожалуйста, введите название группы');
       return;
     }
-
-    const groupId = Date.now();
-
-    const newGroup: Group = {
-      id: groupId,
-      name,
-      balance: balance || 0,
-      members: members.split(',')
-        .map(m => m.trim())
-        .filter(m => m.length > 0),
-      transactions: transactions.map(t => ({
-        ...t,
-        id: Date.now() + Math.floor(Math.random() * 1000)
-      })),
-      color: colors[Math.floor(Math.random() * colors.length)]
-    };
-
-    try {
-      const existingGroups = JSON.parse(localStorage.getItem('groups') || '[]');
-      const updatedGroups = [...existingGroups, newGroup];
-      localStorage.setItem('groups', JSON.stringify(updatedGroups));
-      
-      // Перенаправляем на страницу GroupNew с ID новой группы
-      navigate(`/group/${groupId}`);
-      
-    } catch (error) {
-      console.error('Ошибка сохранения группы:', error);
-      alert('Произошла ошибка при создании группы');
+    if (!name.trim()) {
+      alert('Пожалуйста, введите описание группы');
+      return;
     }
+
+    // Генерируем ID группы
+    const response = await createNewGroup(name, description)
+    console.log(response);
+    
+    // Сохраняем группу в localStorage
+    
+    // localStorage.setItem('groups', JSON.stringify(updatedGroups));
+
+    // // Перенаправляем на страницу группы
+    // navigate(`/group/${groupId}`);
   };
 
   return (
@@ -318,9 +215,7 @@ export default function CreateGroupPage() {
           <BackButton onClick={handleGoBack}>←</BackButton>
           <MainNav>
             {navItems.map((item) => (
-              <NavLink key={item.path} to={item.path}>
-                {item.name}
-              </NavLink>
+              <NavLink key={item.path} to={item.path}>{item.name}</NavLink>
             ))}
           </MainNav>
           <AuthButtons>
@@ -346,61 +241,16 @@ export default function CreateGroupPage() {
         </Section>
 
         <Section>
-          <label>Участники (через запятую)</label>
+          <label>Описание</label>
           <input
             type="text"
-            placeholder="Иван, Мария, Алексей"
-            value={members}
-            onChange={(e) => setMembers(e.target.value)}
+            placeholder="Расходы на проживание, еду и мероприятия"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
           />
         </Section>
 
-        <Section>
-          <label>Начальный баланс</label>
-          <input
-            type="number"
-            value={balance}
-            onChange={(e) => setBalance(Number(e.target.value))}
-          />
-        </Section>
-
-        <Section>
-          <TransactionsHeader>
-            <h2>Транзакции (необязательно)</h2>
-            <AddTransactionBtn onClick={addTransactionField}>
-              Добавить транзакцию
-            </AddTransactionBtn>
-          </TransactionsHeader>
-
-          {transactions.map((t, idx) => (
-            <TransactionFields key={idx}>
-              <input
-                type="date"
-                value={t.date}
-                onChange={(e) => handleTransactionChange(idx, 'date', e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Категория"
-                value={t.category}
-                onChange={(e) => handleTransactionChange(idx, 'category', e.target.value)}
-              />
-              <input
-                type="number"
-                placeholder="Сумма"
-                value={t.amount}
-                onChange={(e) => handleTransactionChange(idx, 'amount', Number(e.target.value))}
-              />
-              <input
-                type="text"
-                placeholder="Участник"
-                value={t.member}
-                onChange={(e) => handleTransactionChange(idx, 'member', e.target.value)}
-              />
-            </TransactionFields>
-          ))}
-        </Section>
-
+        
         <SubmitBtn
           onClick={handleSubmit}
           disabled={!name.trim()}

@@ -1,14 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
+import { deleteGroup, getGroups } from '../../api/group';
+import type { Group } from '../../types/types';
 
-interface Group {
-  id: number;
-  name: string;
-  balance: number;
-  members: number;
-  color: string;
-}
+
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -187,11 +183,11 @@ const GroupCard = styled.div<{ $color: string }>`
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   background: ${({ $color }) => {
     switch ($color) {
-      case 'group-color-1': return 'linear-gradient(to right, #6366f1, #8b5cf6)';
-      case 'group-color-2': return 'linear-gradient(to right, #f59e0b, #ec4899)';
-      case 'group-color-3': return 'linear-gradient(to right, #10b981, #0d9488)';
-      case 'group-color-4': return 'linear-gradient(to right, #3b82f6, #06b6d4)';
-      case 'group-color-5': return 'linear-gradient(to right, #f43f5e, #ef4444)';
+      case '0': return 'linear-gradient(to right, #6366f1, #8b5cf6)';
+      case '1': return 'linear-gradient(to right, #f59e0b, #ec4899)';
+      case '2': return 'linear-gradient(to right, #10b981, #0d9488)';
+      case '3': return 'linear-gradient(to right, #3b82f6, #06b6d4)';
+      case '4': return 'linear-gradient(to right, #f43f5e, #ef4444)';
       default: return '#fff';
     }
   }};
@@ -221,16 +217,11 @@ const GroupHeader = styled.div`
   }
 `;
 
-const GroupBalance = styled.div`
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-`;
-
-const BalanceLabel = styled.div`
+const Description = styled.div`
   font-size: 0.875rem;
   opacity: 0.8;
 `;
+
 
 const GroupFooter = styled.div`
   position: absolute;
@@ -402,55 +393,6 @@ const SecondaryBtn = styled.button`
   }
 `;
 
-const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
-`;
-
-const scaleIn = keyframes`
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-`;
-
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(5px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  z-index: 50;
-  animation: ${fadeIn} 0.3s ease-out;
-`;
-
-const ModalContent = styled.div`
-  background: white;
-  border-radius: 0.75rem;
-  max-width: 28rem;
-  width: 100%;
-  padding: 1.5rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  animation: ${scaleIn} 0.2s ease-out;
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-
-  h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #111827;
-  }
-`;
-
 const CloseBtn = styled.button`
   color: #9ca3af;
   background: none;
@@ -468,117 +410,29 @@ const CloseBtn = styled.button`
   }
 `;
 
-const ModalBody = styled.div`
-  margin-bottom: 1.5rem;
-
-  label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-    margin-bottom: 0.5rem;
-  }
-
-  input {
-    width: 100%;
-    padding: 0.5rem 1rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-
-    &:focus {
-      outline: none;
-      border-color: #059669;
-      box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
-    }
-  }
-`;
-
-const ModalFooter = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-`;
-
-const CancelBtn = styled.button`
-  padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
-  background: white;
-  color: #374151;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  cursor: pointer;
-
-  &:hover {
-    background: #f3f4f6;
-  }
-`;
-
-const ConfirmBtn = styled.button`
-  padding: 0.5rem 1rem;
-  background: #059669;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  cursor: pointer;
-
-  &:hover {
-    background: #047857;
-  }
-
-  &:disabled {
-    background: #9ca3af;
-    cursor: not-allowed;
-  }
-`;
-
 export default function HomePage() {
-  const [groups, setGroups] = useState<Group[]>(() => {
-    // Загружаем группы из localStorage при инициализации
-    const savedGroups = localStorage.getItem('groups');
-    return savedGroups ? JSON.parse(savedGroups) : [
-      { id: 1, name: "Семья", balance: 12500, members: 4, color: "group-color-1" },
-      { id: 2, name: "Путешествия", balance: 8700, members: 3, color: "group-color-2" },
-      { id: 3, name: "Друзья", balance: 4300, members: 5, color: "group-color-3" }
-    ];
-  });
-
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [newGroupName, setNewGroupName] = useState<string>('');
+  const [groups, setGroups] = useState<Group[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
-
-  const handleDeleteGroup = (id: number, e: React.MouseEvent) => {
-  e.stopPropagation(); // Предотвращаем переход по ссылке при клике на крестик
-  setGroups(groups.filter(group => group.id !== id));
-};
-  // Сохраняем группы в localStorage при их изменении
   useEffect(() => {
-    localStorage.setItem('groups', JSON.stringify(groups));
-  }, [groups]);
-
-  const handleCreateGroup = () => {
-    if (newGroupName.trim()) {
-      const colors = ["group-color-1", "group-color-2", "group-color-3", "group-color-4", "group-color-5"];
-      const newGroup: Group = {
-        id: Date.now(), // Используем timestamp для уникального ID
-        name: newGroupName,
-        balance: 0,
-        members: 1,
-        color: colors[Math.floor(Math.random() * colors.length)]
-      };
-      
-      const updatedGroups = [...groups, newGroup];
-      setGroups(updatedGroups);
-      setNewGroupName('');
-      setIsModalOpen(false);
-      
-      // Перенаправляем на страницу новой группы
-      navigate(`/group/${newGroup.id}`);
-    }
-  };
-
+    const fetchGroups = async () => {
+      try {
+        const data = await getGroups() ;
+        setGroups(data);
+        localStorage.setItem('groups', data)
+      } catch {
+        setGroups([]);
+      }
+    };
+    fetchGroups();
+  }, []);
+  const handleDeleteGroup = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updatedGroups = groups.filter(group => group.id !== id);
+    setGroups(updatedGroups);
+    localStorage.setItem('groups', JSON.stringify(updatedGroups)); // <-- правильно!
+    deleteGroup(id);
+  }
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -617,10 +471,10 @@ export default function HomePage() {
           </TitleSection>
 
           <GroupsGrid>
-            {groups.map(group => (
+            {groups.map((group, index) => (
               <GroupCard
                 key={group.id}
-                $color={group.color}
+                $color={`${index % 5}`}
                 onClick={() => navigate(`/group/${group.id}`)}
               >
                 <GroupContent>
@@ -633,8 +487,8 @@ export default function HomePage() {
                       </svg>
                     </DeleteGroupBtn>
                   </GroupHeader>
-                  <GroupBalance>{group.balance.toLocaleString()} ₽</GroupBalance>
-                  <BalanceLabel>Общий баланс</BalanceLabel>
+                  <Description>Описание</Description>
+                  <Description>{group.description}</Description>
                 </GroupContent>
                 <GroupFooter />
               </GroupCard>
@@ -662,43 +516,7 @@ export default function HomePage() {
         </ContentContainer>
       </MainContent>
 
-      {/* Модальное окно */}
-      {isModalOpen && (
-        <ModalOverlay>
-          <ModalContent>
-            <ModalHeader>
-              <h3>Новая группа</h3>
-              <CloseBtn onClick={() => setIsModalOpen(false)}>
-                <svg viewBox="0 0 24 24">
-                  <path d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </CloseBtn>
-            </ModalHeader>
-            <ModalBody>
-              <label htmlFor="groupName">Название группы</label>
-              <input
-                type="text"
-                id="groupName"
-                placeholder="Например: Путешествие в Сочи"
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                autoFocus
-              />
-            </ModalBody>
-            <ModalFooter>
-              <CancelBtn onClick={() => setIsModalOpen(false)}>
-                Отмена
-              </CancelBtn>
-              <ConfirmBtn
-                onClick={handleCreateGroup}
-                disabled={!newGroupName.trim()}
-              >
-                Создать
-              </ConfirmBtn>
-            </ModalFooter>
-          </ModalContent>
-        </ModalOverlay>
-      )}
+     
     </PageContainer>
   );
 }

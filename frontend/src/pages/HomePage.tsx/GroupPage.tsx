@@ -1,23 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
+import { createNewGroup } from '../../api/group';
 
-interface Transaction {
-  id: number;
-  date: string;
-  category: string;
-  amount: number;
-  member: string;
-}
-
-interface Group {
-  id: number;
-  name: string;
-  balance: number;
-  members: string[];
-  transactions: Transaction[];
-  color: string;
-}
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -148,40 +133,6 @@ const Section = styled.div`
   }
 `;
 
-const TransactionsHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-`;
-
-const AddTransactionBtn = styled.button`
-  background: #16a34a;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #15803d;
-  }
-`;
-
-const TransactionFields = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-bottom: 1rem;
-
-  input {
-    padding: 0.5rem 1rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 0.375rem;
-  }
-`;
-
 const SubmitBtn = styled.button`
   display: block;
   width: 100%;
@@ -223,68 +174,27 @@ export default function CreateGroupPage() {
 
   // Состояние формы
   const [name, setName] = useState('');
-  const [members, setMembers] = useState('');
-  const [balance, setBalance] = useState(0);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [transactionCount, setTransactionCount] = useState(0);
-
-  // Добавление поля транзакции
-  const addTransactionField = () => {
-    const newId = transactions.length + 1;
-    const newTransaction: Transaction = {
-      id: newId,
-      date: '',
-      category: '',
-      amount: 0,
-      member: ''
-    };
-    setTransactions([...transactions, newTransaction]);
-    setTransactionCount(transactionCount + 1);
-  };
-
-  // Обработчики изменения полей транзакций
-  const handleTransactionChange = (
-    index: number,
-    field: keyof Transaction,
-    value: string | number
-  ) => {
-    const updated = [...transactions];
-    updated[index][field] = value as never;
-    setTransactions(updated);
-  };
-
-  // Цвета для групп
-  const colors = ['group-color-1', 'group-color-2', 'group-color-3', 'group-color-4', 'group-color-5'];
+  const [description, setDescription] = useState('')
 
   // Функция отправки формы
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name.trim()) {
       alert('Пожалуйста, введите название группы');
       return;
     }
+    if (!name.trim()) {
+      alert('Пожалуйста, введите описание группы');
+      return;
+    }
 
     // Генерируем ID группы
-    const groupId = Date.now();
-
-    const newGroup: Group = {
-      id: groupId,
-      name,
-      balance,
-      members: members.split(',').map((m) => m.trim()).filter(Boolean),
-      transactions: transactions.map(t => ({
-        ...t,
-        id: Date.now() + Math.floor(Math.random() * 1000) // Уникальный ID для транзакции
-      })),
-      color: colors[Math.floor(Math.random() * colors.length)]
-    };
-
+    const response = await createNewGroup(name, description)
+    console.log(response);
+    
     // Сохраняем группу в localStorage
-    const existingGroups = JSON.parse(localStorage.getItem('groups') || '[]');
-    const updatedGroups = [...existingGroups, newGroup];
-    localStorage.setItem('groups', JSON.stringify(updatedGroups));
-
-    // Перенаправляем на страницу группы
-    navigate(`/group/${groupId}`);
+    
+    // localStorage.setItem('groups', JSON.stringify(updatedGroups));
+    // navigate(`/group/${groupId}`);
   };
 
   return (
@@ -320,61 +230,16 @@ export default function CreateGroupPage() {
         </Section>
 
         <Section>
-          <label>Участники (через запятую)</label>
+          <label>Описание</label>
           <input
             type="text"
-            placeholder="Иван, Мария, Алексей"
-            value={members}
-            onChange={(e) => setMembers(e.target.value)}
+            placeholder="Иван@gmail.com, Мария@mail.ru, Алексей@yandex.ru"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
           />
         </Section>
 
-        <Section>
-          <label>Начальный баланс</label>
-          <input
-            type="number"
-            value={balance}
-            onChange={(e) => setBalance(Number(e.target.value))}
-          />
-        </Section>
-
-        <Section>
-          <TransactionsHeader>
-            <h2>Транзакции (необязательно)</h2>
-            <AddTransactionBtn onClick={addTransactionField}>
-              Добавить транзакцию
-            </AddTransactionBtn>
-          </TransactionsHeader>
-
-          {transactions.map((t, idx) => (
-            <TransactionFields key={idx}>
-              <input
-                type="date"
-                value={t.date}
-                onChange={(e) => handleTransactionChange(idx, 'date', e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Категория"
-                value={t.category}
-                onChange={(e) => handleTransactionChange(idx, 'category', e.target.value)}
-              />
-              <input
-                type="number"
-                placeholder="Сумма"
-                value={t.amount}
-                onChange={(e) => handleTransactionChange(idx, 'amount', Number(e.target.value))}
-              />
-              <input
-                type="text"
-                placeholder="Участник"
-                value={t.member}
-                onChange={(e) => handleTransactionChange(idx, 'member', e.target.value)}
-              />
-            </TransactionFields>
-          ))}
-        </Section>
-
+        
         <SubmitBtn
           onClick={handleSubmit}
           disabled={!name.trim()}

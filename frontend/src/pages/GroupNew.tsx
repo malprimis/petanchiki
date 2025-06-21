@@ -383,8 +383,10 @@ export default function GroupNew() {
             </MembersList>
           </Section>
           <Section>
+          <SectionHeader>
               <h2>Отчет</h2>
               <SectionButton onClick={() => navigate(`/group/${group.id}/report`)}>Посмотреть отчет</SectionButton>
+          </SectionHeader>
           </Section>
             <Section>
               <SectionHeader>

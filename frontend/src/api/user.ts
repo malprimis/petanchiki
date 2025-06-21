@@ -11,9 +11,3 @@ export const getUserById = async (userId: string) => {
     return response.data;
 };
 
-export const refreshAuthToken = async (accessToken: string) => {
-    const response = await axios.post(`${API}/auth/refresh`, {
-        token: accessToken
-    });
-    return response.data;
-};

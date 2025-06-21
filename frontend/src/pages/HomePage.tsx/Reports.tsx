@@ -2,7 +2,7 @@
 
 
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { 
   PieChart, Pie, Cell, 
   LineChart, Line, XAxis, YAxis, 
@@ -12,6 +12,195 @@ import {
 import { DatePicker, Select, Spin, Alert, Button } from 'antd';
 import dayjs from 'dayjs';
 import styled from 'styled-components';
+import { getTransactionsInGroupByType } from '../../api/transaction';
+
+ // Styled components
+ const PageContainer = styled.div`
+ min-height: 100vh;
+ min-width: 208vh;
+ background: #f8fafc;
+`;
+
+const PageHeader = styled.header`
+ background: rgba(255, 255, 255, 0.9);
+ backdrop-filter: blur(12px);
+ position: sticky;
+ top: 0;
+ z-index: 40;
+ border-bottom: 1px solid #e5e7eb;
+ box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+`;
+
+const HeaderContainer = styled.div`
+ max-width: 1200px;
+ margin: 0 auto;
+ padding: 0.75rem 1rem;
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+`;
+
+const BackButton = styled.button`
+ background: none;
+ border: none;
+ cursor: pointer;
+ padding: 0.5rem;
+ margin-right: 1rem;
+ color: #4b5563;
+ transition: color 0.2s;
+ font-size: 1.5rem;
+ line-height: 1;
+
+ &:hover {
+   color: #059669;
+ }
+`;
+
+const LogoLink = styled(Link)`
+ display: flex;
+ align-items: center;
+ text-decoration: none;
+`;
+
+const Logo = styled.div`
+ font-size: 1.5rem;
+ font-weight: 700;
+ color: #059669;
+`;
+
+const AuthButtons = styled.div`
+ display: flex;
+ gap: 0.75rem;
+`;
+
+const LoginBtn = styled.button`
+ padding: 0.5rem 1rem;
+ background: transparent;
+ border: none;
+ color: #4b5563;
+ font-weight: 500;
+ cursor: pointer;
+
+ &:hover {
+   color: #111827;
+ }
+`;
+
+const RegisterBtn = styled.button`
+ padding: 0.5rem 1rem;
+ background: linear-gradient(to right, #10b981, #059669);
+ color: white;
+ border: none;
+ border-radius: 0.375rem;
+ font-weight: 500;
+ cursor: pointer;
+ box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+
+ &:hover {
+   background: linear-gradient(to right, #0ea472, #047857);
+   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+ }
+`;
+
+const ReportsContent = styled.div`
+ max-width: 1200px;
+ margin: 0 auto;
+ padding: 1rem;
+`;
+
+const ReportsTitle = styled.h1`
+ font-size: 2rem;
+ font-weight: 700;
+ color: #1e293b;
+ margin-bottom: 1.5rem;
+`;
+
+const FiltersSection = styled.div`
+ background: white;
+ padding: 1.5rem;
+ border-radius: 0.5rem;
+ box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+ margin-bottom: 2rem;
+`;
+
+const FiltersTitle = styled.h2`
+ font-size: 1.25rem;
+ font-weight: 600;
+ margin-bottom: 1rem;
+ color: #1e293b;
+`;
+
+const FiltersGrid = styled.div`
+ display: grid;
+ grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+ gap: 1rem;
+ align-items: flex-end;
+`;
+
+const FilterGroup = styled.div`
+ display: flex;
+ flex-direction: column;
+
+ label {
+   font-size: 0.875rem;
+   font-weight: 500;
+   color: #334155;
+   margin-bottom: 0.5rem;
+ }
+`;
+
+const FilterInput = styled.div`
+ width: 100%;
+`;
+
+const ApplyBtn = styled(Button)`
+ width: 100%;
+ background: #2563eb;
+ border: none;
+
+ &:hover {
+   background: #1d4ed8;
+ }
+`;
+
+const LoadingSpinner = styled.div`
+ display: flex;
+ justify-content: center;
+ padding: 2rem;
+`;
+
+const ErrorAlert = styled.div`
+ margin-bottom: 2rem;
+`;
+
+const ChartsGrid = styled.div`
+ display: grid;
+ grid-template-columns: 1fr;
+ gap: 2rem;
+
+ @media (min-width: 1024px) {
+   grid-template-columns: 1fr 1fr;
+ }
+`;
+
+const ChartContainer = styled.div`
+ background: white;
+ padding: 1.5rem;
+ border-radius: 0.5rem;
+ box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+ h2 {
+   font-size: 1.25rem;
+   font-weight: 600;
+   margin-bottom: 1rem;
+   color: #1e293b;
+ }
+`;
+
+const ChartWrapper = styled.div`
+ height: 400px;
+`;
+
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -38,6 +227,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 const ReportsPage = () => {
   const navigate = useNavigate();
   // Состояния для данных
+  const { id  } = useParams<{ id: string }>();
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [lineData, setLineData] = useState<TransactionData[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -62,32 +252,46 @@ const ReportsPage = () => {
       setLoading(true);
       setError(null);
       
+
+      const fetchedDate = await getTransactionsInGroupByType(id ?? "")
+
+      setCategoryData(
+        fetchedDate.income.map((item: { category: string; value: number }) => ({
+          name: item.category,
+          value: item.value,
+        }))
+      );
+      setLineData(
+        fetchedDate.expense.map((item: { data: string; amount: number }) => ({
+          date: item.data,
+          amount: item.amount,
+        }))
+      );
+      setCategories(fetchedDate.categories_names);
       // Имитация API запросов
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Моковые данные
-      // Нет вообще запроса, а ручка ещё не написана
-      const mockCategoryData: CategoryData[] = [
-        { name: 'Продукты', value: 400 },
-        { name: 'Транспорт', value: 300 },
-        { name: 'Жильё', value: 200 },
-        { name: 'Развлечения', value: 150 },
-        { name: 'Здоровье', value: 100 },
-      ];
+      // // Моковые данные
+      // // Нет вообще запроса, а ручка ещё не написана
+      // const mockCategoryData: CategoryData[] = [
+      //   { name: 'Продукты', value: 400 },
+      //   { name: 'Транспорт', value: 300 },
+      //   { name: 'Жильё', value: 200 },
+      //   { name: 'Развлечения', value: 150 },
+      //   { name: 'Здоровье', value: 100 },
+      // ];
 
-      const mockLineData: TransactionData[] = [
-        { date: '2023-01-01', amount: 400 },
-        { date: '2023-01-02', amount: 300 },
-        { date: '2023-01-03', amount: 600 },
-        { date: '2023-01-04', amount: 200 },
-        { date: '2023-01-05', amount: 500 },
-      ];
+      // const mockLineData: TransactionData[] = [
+      //   { date: '2023-01-01', amount: 400 },
+      //   { date: '2023-01-02', amount: 300 },
+      //   { date: '2023-01-03', amount: 600 },
+      //   { date: '2023-01-04', amount: 200 },
+      //   { date: '2023-01-05', amount: 500 },
+      // ];
 
-      const mockCategories = ['Продукты', 'Транспорт', 'Жильё', 'Развлечения', 'Здоровье'];
+      // const mockCategories = ['Продукты', 'Транспорт', 'Жильё', 'Развлечения', 'Здоровье'];
 
-      setCategoryData(mockCategoryData);
-      setLineData(mockLineData);
-      setCategories(mockCategories);
+      
       
     } catch  {
       setError('Ошибка загрузки данных');
@@ -133,192 +337,7 @@ const ReportsPage = () => {
     return `${name} ${(percent * 100).toFixed(0)}%`;
   };
 
-  // Styled components
-  const PageContainer = styled.div`
-    min-height: 100vh;
-    min-width: 208vh;
-    background: #f8fafc;
-  `;
-
-  const PageHeader = styled.header`
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(12px);
-    position: sticky;
-    top: 0;
-    z-index: 40;
-    border-bottom: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  `;
-
-  const HeaderContainer = styled.div`
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0.75rem 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  `;
-
-  const BackButton = styled.button`
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0.5rem;
-    margin-right: 1rem;
-    color: #4b5563;
-    transition: color 0.2s;
-    font-size: 1.5rem;
-    line-height: 1;
-
-    &:hover {
-      color: #059669;
-    }
-  `;
-
-  const LogoLink = styled(Link)`
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-  `;
-
-  const Logo = styled.div`
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #059669;
-  `;
-
-  const AuthButtons = styled.div`
-    display: flex;
-    gap: 0.75rem;
-  `;
-
-  const LoginBtn = styled.button`
-    padding: 0.5rem 1rem;
-    background: transparent;
-    border: none;
-    color: #4b5563;
-    font-weight: 500;
-    cursor: pointer;
-
-    &:hover {
-      color: #111827;
-    }
-  `;
-
-  const RegisterBtn = styled.button`
-    padding: 0.5rem 1rem;
-    background: linear-gradient(to right, #10b981, #059669);
-    color: white;
-    border: none;
-    border-radius: 0.375rem;
-    font-weight: 500;
-    cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-
-    &:hover {
-      background: linear-gradient(to right, #0ea472, #047857);
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-  `;
-
-  const ReportsContent = styled.div`
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 1rem;
-  `;
-
-  const ReportsTitle = styled.h1`
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 1.5rem;
-  `;
-
-  const FiltersSection = styled.div`
-    background: white;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    margin-bottom: 2rem;
-  `;
-
-  const FiltersTitle = styled.h2`
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: #1e293b;
-  `;
-
-  const FiltersGrid = styled.div`
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-    align-items: flex-end;
-  `;
-
-  const FilterGroup = styled.div`
-    display: flex;
-    flex-direction: column;
-
-    label {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #334155;
-      margin-bottom: 0.5rem;
-    }
-  `;
-
-  const FilterInput = styled.div`
-    width: 100%;
-  `;
-
-  const ApplyBtn = styled(Button)`
-    width: 100%;
-    background: #2563eb;
-    border: none;
-
-    &:hover {
-      background: #1d4ed8;
-    }
-  `;
-
-  const LoadingSpinner = styled.div`
-    display: flex;
-    justify-content: center;
-    padding: 2rem;
-  `;
-
-  const ErrorAlert = styled.div`
-    margin-bottom: 2rem;
-  `;
-
-  const ChartsGrid = styled.div`
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2rem;
-
-    @media (min-width: 1024px) {
-      grid-template-columns: 1fr 1fr;
-    }
-  `;
-
-  const ChartContainer = styled.div`
-    background: white;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-
-    h2 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      color: #1e293b;
-    }
-  `;
-
-  const ChartWrapper = styled.div`
-    height: 400px;
-  `;
+ 
 
   return (
     <PageContainer>

@@ -45,7 +45,6 @@ const BackButton = styled.button`
   }
 `;
 
-
 const AuthButtons = styled.div`
   display: flex;
   gap: 0.75rem;

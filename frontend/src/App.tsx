@@ -49,13 +49,13 @@ function App() {
         {/* Маршруты групп */}
         <Route path="/group/:id" element={<GroupNew />} />
         <Route path="/group/:id/add-transaction" element={<AddTransaction />} />
+        <Route path="/group/:id/report" element={<Reports />} />
         
         {/* Создание группы */}
         <Route path="/create-group" element={<CreateGroup />} />
         
         {/* Другие маршруты */}
         <Route path="/" element={<HomePage />} />
-        <Route path="/reports" element={<Reports />} />
         
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/" replace />} />

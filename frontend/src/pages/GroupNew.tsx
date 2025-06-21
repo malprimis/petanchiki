@@ -336,7 +336,6 @@ export default function GroupNew() {
           <GroupContent>
             <Header>
               <h1>{group.name}</h1>
-              {/* <Balance>Баланс: {group.balance} ₽</Balance> */}
             </Header>
             <Section>
               <h2>Описание</h2>
@@ -382,6 +381,10 @@ export default function GroupNew() {
                 ))
               }
             </MembersList>
+          </Section>
+          <Section>
+              <h2>Отчет</h2>
+              <SectionButton onClick={() => navigate(`/group/${group.id}/report`)}>Посмотреть отчет</SectionButton>
           </Section>
             <Section>
               <SectionHeader>

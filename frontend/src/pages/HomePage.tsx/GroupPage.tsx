@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { createNewGroup } from '../../api/group';
 
@@ -39,24 +39,6 @@ const BackButton = styled.button`
   transition: color 0.2s;
   font-size: 1.5rem;
   line-height: 1;
-
-  &:hover {
-    color: #059669;
-  }
-`;
-
-const MainNav = styled.nav`
-  display: flex;
-  gap: 1rem;
-`;
-
-const NavLink = styled(Link)`
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #4b5563;
-  text-decoration: none;
-  transition: color 0.2s;
 
   &:hover {
     color: #059669;
@@ -160,13 +142,6 @@ const SubmitBtn = styled.button`
 export default function CreateGroupPage() {
   const navigate = useNavigate();
 
-  // Навигационное меню
-  const navItems = [
-    { path: '/home', name: 'Главная' },
-    { path: '/who', name: 'Отчеты' },
-    { path: '/features', name: 'Группы' },
-  ];
-
   // Функция для возврата назад
   const handleGoBack = () => {
     navigate(-1);
@@ -202,11 +177,6 @@ export default function CreateGroupPage() {
       <PageHeader>
         <HeaderContainer>
           <BackButton onClick={handleGoBack}>←</BackButton>
-          <MainNav>
-            {navItems.map((item) => (
-              <NavLink key={item.path} to={item.path}>{item.name}</NavLink>
-            ))}
-          </MainNav>
           <AuthButtons>
             <LoginBtn>Вход</LoginBtn>
             <RegisterBtn>Регистрация</RegisterBtn>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // вообще под снос, будет одна кнопка со скачиванием pdf файла
 
 
@@ -247,7 +248,7 @@ const ReportsPage = () => {
   };
 
   // Загрузка данных
-  const fetchData = async (params?: FilterParams) => {
+  const fetchData = async (_params?: FilterParams) => {
     try {
       setLoading(true);
       setError(null);

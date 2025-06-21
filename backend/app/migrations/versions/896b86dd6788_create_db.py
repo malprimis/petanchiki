@@ -73,7 +73,7 @@ def upgrade() -> None:
     sa.Column('amount', sa.Numeric(precision=12, scale=2), nullable=False),
     sa.Column('type', sa.Enum('expense', 'income', name='transactiontype'), nullable=False),
     sa.Column('description', sa.String(), nullable=True),
-    sa.Column('date', sa.DateTime(), nullable=True),
+    sa.Column('date', sa.DateTime(timezone=True), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ),

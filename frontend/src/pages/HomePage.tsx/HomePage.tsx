@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { deleteGroup, getGroups } from '../../api/group';
 import type { Group } from '../../types/types';
@@ -46,44 +46,44 @@ const Logo = styled.div`
   color: #059669;
 `;
 
-const MainNav = styled.nav`
-  display: none;
-  width: 100%;
-  justify-content: space-between;
-  padding: 0 2rem;
+// const MainNav = styled.nav`
+//   display: none;
+//   width: 100%;
+//   justify-content: space-between;
+//   padding: 0 2rem;
 
-  @media (min-width: 768px) {
-    display: flex;
-  }
-`;
+//   @media (min-width: 768px) {
+//     display: flex;
+//   }
+// `;
 
-const NavLinkStyled = styled(Link)<{ $active?: boolean }>`
-  position: relative;
-  padding: 1rem 1.5rem;
-  font-size: 1.25rem;
-  font-weight: 600;
-  text-align: center;
-  flex: 1;
-  transition: all 0.3s ease;
-  color: ${({ $active }) => ($active ? '#059669' : '#4b5563')};
-  text-decoration: none;
+// const NavLinkStyled = styled(Link)<{ $active?: boolean }>`
+//   position: relative;
+//   padding: 1rem 1.5rem;
+//   font-size: 1.25rem;
+//   font-weight: 600;
+//   text-align: center;
+//   flex: 1;
+//   transition: all 0.3s ease;
+//   color: ${({ $active }) => ($active ? '#059669' : '#4b5563')};
+//   text-decoration: none;
 
-  &:hover {
-    color: #111827;
-    transform: scale(1.05);
-  }
-`;
+//   &:hover {
+//     color: #111827;
+//     transform: scale(1.05);
+//   }
+// `;
 
-const NavIndicator = styled.span`
-  position: absolute;
-  left: 50%;
-  bottom: 0.5rem;
-  height: 2px;
-  width: 2.5rem;
-  transform: translateX(-50%);
-  background-color: #059669;
-  border-radius: 9999px;
-`;
+// const NavIndicator = styled.span`
+//   position: absolute;
+//   left: 50%;
+//   bottom: 0.5rem;
+//   height: 2px;
+//   width: 2.5rem;
+//   transform: translateX(-50%);
+//   background-color: #059669;
+//   border-radius: 9999px;
+// `;
 
 const AuthButtons = styled.div`
   display: flex;
@@ -413,7 +413,6 @@ const CloseBtn = styled.button`
 export default function HomePage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const navigate = useNavigate();
-  const location = useLocation();
   useEffect(() => {
     const fetchGroups = async () => {
       try {
@@ -433,29 +432,12 @@ export default function HomePage() {
     localStorage.setItem('groups', JSON.stringify(updatedGroups)); // <-- правильно!
     deleteGroup(id);
   }
-  const isActive = (path: string) => location.pathname === path;
 
   return (
     <PageContainer>
       <PageHeader>
         <HeaderContainer>
           <LogoLink to="/"><Logo>CashCrew</Logo></LogoLink>
-          <MainNav>
-            {[
-              { path: '/home', name: 'Главная' },
-              { path: '/reports', name: 'Отчеты' },
-              { path: '/features', name: 'Группы' },
-            ].map((item) => (
-              <NavLinkStyled
-                key={item.path}
-                to={item.path}
-                $active={isActive(item.path)}
-              >
-                {item.name}
-                {isActive(item.path) && <NavIndicator />}
-              </NavLinkStyled>
-            ))}
-          </MainNav>
           <AuthButtons>
             <LoginBtn onClick={() => navigate('/login')}>Вход</LoginBtn>
             <RegisterBtn onClick={() => navigate('/register')}>Регистрация</RegisterBtn>

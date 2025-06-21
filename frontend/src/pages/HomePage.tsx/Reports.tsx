@@ -51,13 +51,6 @@ const ReportsPage = () => {
   ]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  // Навигационное меню
-  const navItems = [
-    { path: '/home', name: 'Главная' },
-    { path: '/who', name: 'Отчеты' },
-    { path: '/features', name: 'Группы' },
-  ];
-
   // Функция для возврата назад
   const handleGoBack = () => {
     navigate(-1);
@@ -351,11 +344,6 @@ const ReportsPage = () => {
         <HeaderContainer>
           <BackButton onClick={handleGoBack}>←</BackButton>
           <LogoLink to="/"><Logo>CashCrew</Logo></LogoLink>
-          <MainNav>
-            {navItems.map((item) => (
-              <NavLink key={item.path} to={item.path}>{item.name}</NavLink>
-            ))}
-          </MainNav>
           <AuthButtons>
             <LoginBtn>Вход</LoginBtn>
             <RegisterBtn>Регистрация</RegisterBtn>

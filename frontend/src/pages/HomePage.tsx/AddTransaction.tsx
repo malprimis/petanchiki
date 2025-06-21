@@ -48,23 +48,23 @@ const BackButton = styled.button`
   }
 `;
 
-const MainNav = styled.nav`
-  display: flex;
-  gap: 1rem;
-`;
+// const MainNav = styled.nav`
+//   display: flex;
+//   gap: 1rem;
+// `;
 
-const NavLink = styled(Link)`
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #4b5563;
-  text-decoration: none;
-  transition: color 0.2s;
+// const NavLink = styled(Link)`
+//   padding: 0.5rem 1rem;
+//   font-size: 1rem;
+//   font-weight: 500;
+//   color: #4b5563;
+//   text-decoration: none;
+//   transition: color 0.2s;
 
-  &:hover {
-    color: #059669;
-  }
-`;
+//   &:hover {
+//     color: #059669;
+//   }
+// `;
 
 const AuthButtons = styled.div`
   display: flex;
@@ -279,13 +279,6 @@ export default function AddTransactionPage() {
     fetchCategories();
   }, [groupId]);
 
-  // Навигационное меню
-  const navItems = [
-    { path: '/home', name: 'Главная' },
-    { path: '/who', name: 'Отчеты' },
-    { path: '/features', name: 'Группы' },
-  ];
-
   // Функция для возврата назад
   const handleGoBack = () => {
     navigate(-1); // Возврат на предыдущую страницу в истории
@@ -370,17 +363,6 @@ export default function AddTransactionPage() {
           <BackButton onClick={handleGoBack}>
             ← {/* Символ стрелки */}
           </BackButton>
-          
-          <MainNav>
-            {navItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-              >
-                {item.name}
-              </NavLink>
-            ))}
-          </MainNav>
 
           <AuthButtons>
             <Link to={'/login'}><LoginBtn >Вход</LoginBtn></Link>

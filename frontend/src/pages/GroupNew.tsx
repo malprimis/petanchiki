@@ -336,27 +336,11 @@ export default function GroupNew() {
     }
   }
   // Навигационное меню
-  const navItems = [
-    { path: '/home', name: 'Главная' },
-    { path: '/who', name: 'Отчеты' },
-    { path: '/features', name: 'Группы' },
-  ];
   return (
     <PageContainer>
       <PageHeader>
         <HeaderContainer>
           <BackButton onClick={() => navigate(-1)}>←</BackButton>
-
-          <MainNav>
-            {navItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-              >
-                {item.name}
-              </NavLink>
-            ))}
-          </MainNav>
 
           <AuthButtons>
             <Link to={'/login'}><LoginBtn >Вход</LoginBtn></Link>

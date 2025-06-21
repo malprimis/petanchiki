@@ -21,3 +21,9 @@ export const getGroupById = async (groupId: string) => {
   const response = await axios.get(`${API}/groups/${groupId}`);
   return response.data;
 };
+
+
+export const addMemberToGroup = async (groupId: string, email: string) => {
+  const response = await axios.post(`${API}/groups/${groupId}/members`, { 'email': email });
+  return response.data;
+};

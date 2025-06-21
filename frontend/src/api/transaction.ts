@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API } from '../main';
+import type { Transaction } from '../types/types';
 
 export const getCategories = async (groupId: string) => {
   try{
@@ -10,33 +11,34 @@ export const getCategories = async (groupId: string) => {
   }
 };
 
-export const addCategory = async (groupId: string, categoryData : {
-  name: string,
-  icon?: string //добавления иконки просто нет в создании категории + она не обязательна на беке, её никогда не будет в беке придобавлении
-}) => {
+export const addCategory = async (groupId: string, categoryData : string,) => {
+   //добавления иконки просто нет в создании категории + она не обязательна на беке, её никогда не будет в беке придобавлении
+
   try{
-  const response = await axios.post(`${API}/groups/${groupId}/categories`, categoryData);
+  const response = await axios.post(`${API}/groups/${groupId}/categories`,  {'name':categoryData, icon: null} );
   return response.data;
   }
   catch {
     console.log("addCategory error"); 
   }
-
 };
 
-
-export const addTransaction = async (groupId:string, transactionData: {
-  amount: number;
-  groupId : string;
-  categoryId: string;
-  date: string;
-  description: string;
-}) => {
+export const addTransaction = async ( transactionData: Transaction) => {
   try{
-    const response = await axios.post(`${API}/groups/${groupId}/transactions`, transactionData);
+    const response = await axios.post(`${API}/transactions`, transactionData);
     return response.data;
   }
   catch {
-    console.log("addCategory error"); 
+    console.log("addTransaction error");
+  }
+};
+
+export const getTransactionsInGroup = async (groupId: string) => {
+  try{
+    const response = await axios.get(`${API}/transactions`, {params:{'group_id' : groupId}});
+    return response.data;
+  }
+  catch {
+    console.log("getTransactionsInGroup error");
   }
 };

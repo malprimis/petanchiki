@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import type { FormEvent } from 'react';
 import Header from '../../components/Header';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import styled from 'styled-components';
 import { addCategory, addTransaction, getCategories } from '../../api/transaction';
+import type { Category } from '../../types/types';
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -234,33 +235,50 @@ const SubmitBtn = styled.button`
   }
 `;
 
+const TypeTransaction = styled.div`
+  display: flex;
+  gap: 1rem;
+`
+
+const TypeTransactionChoose = styled.div`
+  display: flex;
+`
+
+const TypeTransactionLabel = styled.label`
+  display: inline;
+`
+
+
+
 export default function AddTransactionPage() {
   const { id: groupId } = useParams();
   const navigate = useNavigate();
   const [category, setCategory] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-  const [date] = useState(new Date().toISOString().split('T')[0]);
   const [errors, setErrors] = useState({
     category: '',
     amount: '',
     description: ''
   });
-  const [categories, setCategories] = useState<string[]>(['Другое']);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [newCategory, setNewCategory] = useState('');
+  const [type, setType] = useState<'expense' | 'income'>('expense');
 
-  //функция получения уже имеющихся категорий с бека
-  const fetchCategories = async () => {
-    try{
-      const fetchedCategories = await getCategories(groupId ?? "")
-      setCategories([...categories, fetchedCategories])
-    }
-    catch {
-      console.log('fetchCategories error');
-      
-    }
-  }
-  fetchCategories()
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const fetchedCategories = await getCategories(groupId ?? "");
+        if (Array.isArray(fetchedCategories)) {
+          setCategories([...fetchedCategories]);
+        }
+      } catch {
+        console.log('fetchCategories error');
+      }
+    };
+    fetchCategories();
+  }, [groupId]);
+
   // Навигационное меню
   const navItems = [
     { path: '/home', name: 'Главная' },
@@ -306,13 +324,16 @@ export default function AddTransactionPage() {
     e.preventDefault();
     if (validateForm()) {
       try{
-      await addTransaction(groupId ?? "",{
-        categoryId: category,
-        amount: Number(amount),
-        description: description,
-        date: date,
-        groupId: groupId ?? ""
-      });}
+        
+        await addTransaction({
+          category_id: category,
+          amount: Number(amount),
+          description: description,
+          date: new Date().toISOString(),
+          group_id: groupId ?? "",
+          type: type,
+        });
+      }
       catch{
         console.log("Submit error");
         
@@ -327,16 +348,17 @@ export default function AddTransactionPage() {
 
   const handleAddCategory = async () => {
     const trimmed = newCategory.trim();
-    if (trimmed && !categories.includes(trimmed)) {
+    if (trimmed) {
       try{
-        await addCategory(groupId ?? "", {name: newCategory})
+        const createdCategory = await addCategory(groupId ?? "", trimmed);
+        setCategories([...categories, createdCategory]);
+        setNewCategory('');
       }
       catch{
         console.log('handleAddCategory error');
         
       }
-      setCategories([...categories, trimmed]);
-      setNewCategory('');
+      
     }
   };
 
@@ -361,8 +383,8 @@ export default function AddTransactionPage() {
           </MainNav>
 
           <AuthButtons>
-            <LoginBtn>Вход</LoginBtn>
-            <RegisterBtn>Регистрация</RegisterBtn>
+            <Link to={'/login'}><LoginBtn >Вход</LoginBtn></Link>
+            <Link to={'/register'}><RegisterBtn>Регистрация</RegisterBtn></Link> 
           </AuthButtons>
         </HeaderContainer>
       </PageHeader>
@@ -396,8 +418,8 @@ export default function AddTransactionPage() {
               onChange={(e) => setCategory(e.target.value)}
             >
               <option value="">Выберите категорию</option>
-              {categories.map((cat, index) => (
-                <option key={index} value={cat}>{cat}</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
             {errors.category && <ErrorMessage>{errors.category}</ErrorMessage>}
@@ -425,6 +447,32 @@ export default function AddTransactionPage() {
               placeholder="Детали транзакции..."
             />
             {errors.description && <ErrorMessage>{errors.description}</ErrorMessage>}
+          </FormGroup>
+
+          <FormGroup>
+            <label>Тип транзакции</label>
+            <TypeTransaction>
+            <TypeTransactionChoose>
+              <TypeTransactionLabel>Расход</TypeTransactionLabel>
+              <input
+                type="radio"
+                name="type1"
+                value="expense"
+                checked={type === 'expense'}
+                onChange={() => setType('expense')}
+              />
+            </TypeTransactionChoose>
+            <TypeTransactionChoose>
+              <TypeTransactionLabel>Доход</TypeTransactionLabel>
+              <input
+                type="radio"
+                name="type2"
+                value="income"
+                checked={type === 'income'}
+                onChange={() => setType('income')}
+              />
+              </TypeTransactionChoose>
+            </TypeTransaction>
           </FormGroup>
 
           <FormActions>

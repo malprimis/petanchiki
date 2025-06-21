@@ -6,8 +6,39 @@ import Reports from '../src/pages/HomePage.tsx/Reports.tsx';
 import { LoginPage } from '../src/pages/HomePage.tsx/LoginPage.tsx';
 import { RegisterPage } from '../src/pages/HomePage.tsx/RegisterPage.tsx';
 import CreateGroup from '../src/pages/CreateGroup.tsx';
+import { refreshAuthToken } from './api/auth.ts';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+
+axios.interceptors.request.use(config => {
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+}, error => Promise.reject(error));
+
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const restoreAuth = async () => {
+      const savedRefreshToken = localStorage.getItem('access_token');
+      if (savedRefreshToken && !isAuthenticated) {
+        try {
+          await refreshAuthToken(savedRefreshToken);
+          setIsAuthenticated(true);
+        } catch {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+        }
+      }
+    };
+    restoreAuth();
+  }, []);
+
   return (
     <Router>
       <Routes>

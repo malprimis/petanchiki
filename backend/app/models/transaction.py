@@ -2,6 +2,7 @@ import datetime
 import uuid
 
 import sqlalchemy as sa
+from sqlalchemy import DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, intpk, created_at, updated_at, TransactionType
@@ -17,7 +18,7 @@ class Transaction(Base):
     amount: Mapped[float] = mapped_column(sa.Numeric(precision=12, scale=2))
     type: Mapped[TransactionType]
     description: Mapped[str | None]
-    date: Mapped[datetime.datetime | None]
+    date: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
 

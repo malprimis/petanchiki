@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { addMemberToGroup, getGroupById } from '../api/group';
-import type { Category, Group, Transaction, TransactionResponse } from '../types/types';
+import type { Category, Group, TransactionResponse } from '../types/types';
 import { getCategories, getTransactionsInGroup } from '../api/transaction';
 
 
@@ -49,23 +49,6 @@ const BackButton = styled.button`
   }
 `;
 
-const MainNav = styled.nav`
-  display: flex;
-  gap: 1rem;
-`;
-
-const NavLink = styled(Link)`
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #4b5563;
-  text-decoration: none;
-  transition: color 0.2s;
-
-  &:hover {
-    color: #059669;
-  }
-`;
 
 const AuthButtons = styled.div`
   display: flex;

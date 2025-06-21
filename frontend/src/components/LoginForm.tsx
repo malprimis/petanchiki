@@ -1,6 +1,5 @@
 import { AuthForm } from '../components/AuthForm.tsx';
 import { login } from '../api/auth.ts';
-import axios from 'axios';
 
 export const LoginForm = () => {
   const handleLogin = async (email: string, password: string) => {

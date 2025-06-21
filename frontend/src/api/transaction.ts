@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API } from '../main';
-import type { Transaction } from '../types/types';
+import type { CreateTransaction } from '../types/types';
 
 export const getCategories = async (groupId: string) => {
   try{
@@ -23,7 +23,7 @@ export const addCategory = async (groupId: string, categoryData : string,) => {
   }
 };
 
-export const addTransaction = async ( transactionData: Transaction) => {
+export const addTransaction = async ( transactionData: CreateTransaction) => {
   try{
     const response = await axios.post(`${API}/transactions`, transactionData);
     return response.data;

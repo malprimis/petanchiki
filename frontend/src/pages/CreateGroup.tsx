@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { createNewGroup } from '../api/group';
 
@@ -45,23 +45,6 @@ const BackButton = styled.button`
   }
 `;
 
-// const MainNav = styled.nav`
-//   display: flex;
-//   gap: 1rem;
-// `;
-
-// const NavLink = styled(Link)`
-//   padding: 0.5rem 1rem;
-//   font-size: 1rem;
-//   font-weight: 500;
-//   color: #4b5563;
-//   text-decoration: none;
-//   transition: color 0.2s;
-
-//   &:hover {
-//     color: #059669;
-//   }
-// `;
 
 const AuthButtons = styled.div`
   display: flex;

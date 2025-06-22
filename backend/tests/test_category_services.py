@@ -1,15 +1,14 @@
-import pytest
-import pytest_asyncio
 from uuid import UUID
 
+import pytest
+import pytest_asyncio
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
 from app.db.base import Base
-from app.schemas.user import UserCreate
-from app.schemas.group import GroupCreate
 from app.schemas.category import CategoryCreate, CategoryUpdate
-from app.services.user_service import create_user
-from app.services.group_service import create_group
+from app.schemas.group import GroupCreate
+from app.schemas.user import UserCreate
 from app.services.category_service import (
     create_category,
     get_category_by_id,
@@ -18,7 +17,8 @@ from app.services.category_service import (
     delete_category,
     is_category_name_unique,
 )
-from fastapi import HTTPException
+from app.services.group_service import create_group
+from app.services.user_service import create_user
 
 # тестовая БД в памяти
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"

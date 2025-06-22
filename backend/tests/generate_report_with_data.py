@@ -2,22 +2,20 @@
 
 import asyncio
 import random
+from datetime import date
+from datetime import date as dt_date, timedelta
 from uuid import uuid4
-from datetime import date, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.future import select
-from datetime import date as dt_date, datetime, timedelta
-from app.db.base import TransactionType
-from app.models.user import User
-from app.models.group import Group
-from app.models.category import Category
-from app.models.transaction import Transaction
-from app.schemas.report import ReportPdfRequest
-from app.services.report_service import generate_report_data, generate_report_pdf
-from app.db.base import Base
 
+from app.db.base import Base
+from app.db.base import TransactionType
+from app.models.category import Category
+from app.models.group import Group
+from app.models.transaction import Transaction
+from app.models.user import User
+from app.services.report_service import generate_report_data, generate_report_pdf
 
 # --- Подключение к БД (SQLite) ---
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"

@@ -1,25 +1,23 @@
 # tests/test_report_service.py
 
+from datetime import datetime
+from pathlib import Path
+
 import pytest
 import pytest_asyncio
-from datetime import datetime
-from uuid import UUID
-
-from pathlib import Path
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
 from app.db.base import Base, TransactionType
-from app.schemas.user import UserCreate
-from app.schemas.group import GroupCreate
 from app.schemas.category import CategoryCreate
-from app.schemas.transaction import TransactionCreate
+from app.schemas.group import GroupCreate
 from app.schemas.report import ReportPdfRequest
-from app.services.user_service import create_user
-from app.services.group_service import create_group
+from app.schemas.transaction import TransactionCreate
+from app.schemas.user import UserCreate
 from app.services.category_service import create_category
-from app.services.transaction_service import create_transaction
+from app.services.group_service import create_group
 from app.services.report_service import generate_report_data, generate_report_pdf, get_report_file_path
-
+from app.services.transaction_service import create_transaction
+from app.services.user_service import create_user
 
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 engine = create_async_engine(DATABASE_URL, echo=False)

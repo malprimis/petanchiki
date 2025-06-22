@@ -1,25 +1,25 @@
+import math
 import os
 import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
+from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
-from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
-import math
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.base import TransactionType
 from app.models.transaction import Transaction
+from app.schemas.report import ReportPdfRequest
 from app.services.category_service import get_category_by_id
 from app.services.user_service import get_user_by_id
-from app.schemas.report import ReportPdfRequest
 
 # Регистрация шрифта для кириллицы
 FONT_PATH = Path(__file__).parent.parent / "static" / "fonts" / "DejaVuSans.ttf"
@@ -42,6 +42,13 @@ async def generate_report_data(
     db: AsyncSession,
     req: ReportPdfRequest
 ) -> Dict[str, Any]:
+    """
+    Формирует агрегированные данные по доходам и расходам для отчёта.
+
+    :param db: асинхронная сессия SQLAlchemy
+    :param req: параметры запроса для отчёта (группа, даты)
+    :return: словарь с агрегированными значениями по категориям и пользователям
+    """
     filters = []
     if req.date_from:
         filters.append(Transaction.date >= req.date_from)
@@ -87,6 +94,13 @@ async def generate_report_pdf(
     db: AsyncSession,
     req: ReportPdfRequest
 ) -> Path:
+    """
+    Генерирует PDF-отчёт по транзакциям группы с графиками и таблицей.
+
+    :param db: асинхронная сессия SQLAlchemy
+    :param req: параметры отчёта (группа, диапазон дат)
+    :return: путь к сгенерированному PDF-файлу
+    """
     data = await generate_report_data(db, req)
     report_id = uuid.uuid4()
     output_path = REPORTS_DIR / f"report_{report_id}.pdf"
@@ -223,6 +237,13 @@ async def generate_report_pdf(
 
 
 async def get_report_file_path(report_id: uuid.UUID) -> Path:
+    """
+    Возвращает путь к сохранённому PDF-отчёту по report_id.
+
+    :param report_id: UUID отчёта
+    :return: путь к PDF-файлу
+    :raises FileNotFoundError: если файл не найден
+    """
     pattern = f"report_{report_id}"
     for file in REPORTS_DIR.iterdir():
         if file.name.startswith(pattern) and file.suffix == ".pdf":

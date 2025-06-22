@@ -3,6 +3,7 @@ import sys
 
 from loguru import logger
 
+
 class InterceptHandler(logging.Handler):
     """
     Custom logging handler to intercept standard logging records and redirect them to Loguru.

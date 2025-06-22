@@ -1,12 +1,9 @@
-import uvicorn
 from contextlib import asynccontextmanager
+
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.config import settings
-from app.db.session import (
-    async_engine,
-)
 from app.api.v1.endpoints import (
     auth,
     users,
@@ -14,7 +11,10 @@ from app.api.v1.endpoints import (
     categories,
     transactions,
 )
-
+from app.core.config import settings
+from app.db.session import (
+    async_engine,
+)
 from app.utils.logger import setup_logging
 
 setup_logging()

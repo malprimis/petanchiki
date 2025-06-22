@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Sequence
 
 from fastapi import HTTPException
-from pydantic import EmailStr
 from sqlalchemy import select, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -21,40 +20,13 @@ async def create_group(
         group_in: GroupCreate,
         owner_id: uuid.UUID
 ) -> Group:
-    """Create a new *active* group and register its owner as **admin**.
+    """
+    Создаёт новую группу и добавляет владельца как администратора.
 
-    The helper performs two separate inserts within the same session:
-
-    1. A new `~app.models.group.Group` is created using the user‑supplied
-       *name* and *description*.
-    2. A matching `~app.models.user_group.UserGroup` row that grants
-       creating user an **admin** role inside the freshly created group.
-
-    Persistence is done eagerly (two commits) to ensure the ``group.id`` is
-    available for the *membership* record and that concurrent requests cannot
-    observe a partially initialized group.
-
-    Parameters
-    ----------
-    db:
-        An **open** async SQLAlchemy session bound to the function caller's
-        transaction context.
-    group_in:
-        Pydantic schema carrying the *name* and *description* fields provided by
-        the client.
-    owner_id:
-        Primary‑key value of the user that initiates group creation.
-
-    Returns
-    -------
-    Group
-        A fully reflected ORM instance representing the persisted group,
-        including an auto‑generated ``id``.
-
-    Raises
-    ------
-    sqlalchemy.exc.SQLAlchemyError
-        If the underlying insert statements fail (propagated unchanged).
+    :param db: асинхронная сессия SQLAlchemy
+    :param group_in: данные о новой группе
+    :param owner_id: UUID владельца группы
+    :return: созданная группа
     """
     group = Group(
         name=group_in.name,
@@ -85,28 +57,17 @@ async def get_group_by_id(
         group_id: uuid.UUID,
         only_active: bool = True
 ) -> Group | None:
-    """Retrieve a single group by its primary key.
+    """
+    Возвращает группу по её ID, опционально фильтруя по активности.
 
-    Parameters
-    ----------
-    db:
-        Active SQLAlchemy async session.
-    group_id:
-        Primary key of the group to fetch.
-    only_active:
-        If *True* (default) the query filters out groups whose ``is_active`` flag
-        is **False**. Toggle to *False* for administrative tooling that must
-        inspect soft‑deleted groups.
-
-    Returns
-    -------
-    Group | None
-        The matching ORM instance **or** *None* when no such group exists (or is
-        inactive when *only_active=True*).
+    :param db: асинхронная сессия SQLAlchemy
+    :param group_id: UUID группы
+    :param only_active: учитывать только активные группы
+    :return: объект группы или None
     """
     stmt = select(Group).options(selectinload(Group.members))
     if only_active:
-        stmt = stmt.filter(Group.is_active == True)  # noqa: E712
+        stmt = stmt.filter(Group.is_active == True)
     stmt = stmt.filter(Group.id == group_id)
     result = await db.execute(stmt)
     return result.scalars().first()
@@ -116,24 +77,12 @@ async def list_group_by_user(
         db: AsyncSession,
         user_id: uuid.UUID
 ) -> Sequence[Group]:
-    """Return all **active** groups the user participates in.
+    """
+    Возвращает список активных групп, в которых состоит пользователь.
 
-    Joins through the association table ``user_groups`` and returns each
-    `Group` where a corresponding `UserGroup` entry exists for the
-    supplied ``user_id``.
-
-    Parameters
-    ----------
-    db:
-        Async SQLAlchemy session.
-    user_id:
-        User identifier whose memberships must be listed.
-
-    Returns
-    -------
-    Sequence[Group]
-        A possibly empty *list‑like* collection containing the groups ordered in
-        the order supplied by the database (usually primary‑key order).
+    :param db: асинхронная сессия SQLAlchemy
+    :param user_id: UUID пользователя
+    :return: список групп
     """
     stmt = (
         select(Group)
@@ -152,36 +101,15 @@ async def update_group(
         group_in: GroupUpdate,
         current_user: User
 ) -> Group:
-    """Modify mutable attributes (``name``, ``description``) of a group.
+    """
+    Обновляет данные группы, если пользователь является её администратором.
 
-    The operation is gated by *role‑based* access control:
-
-    * **Admins** of the *same* group are allowed to update.
-    * All other users receive *403 Forbidden* via `fastapi.HTTPException`.
-
-    Parameters
-    ----------
-    db:
-        Async session in the current request context.
-    group:
-        ORM instance representing the *target* group. Must already be attached
-        to db.
-    group_in:
-        A *partial* instance whose attributes (``name``, ``description``) carry
-        the new values. Attributes set to ``None`` are ignored.
-    current_user:
-        Authenticated user issuing the update.
-
-    Returns
-    -------
-    Group
-        The refreshed ORM instance after successful commit. If no fields were
-        modified, the original object is returned unchanged.
-
-    Raises
-    ------
-    fastapi.HTTPException
-        * 403 – When the caller is **not** an admin of the group.
+    :param db: асинхронная сессия SQLAlchemy
+    :param group: объект группы для обновления
+    :param group_in: данные для обновления
+    :param current_user: пользователь, совершающий операцию
+    :return: обновлённая группа
+    :raises HTTPException 403: если нет прав на обновление
     """
     membership = await db.execute(
         select(UserGroup)
@@ -213,31 +141,13 @@ async def delete_group(
         group: Group,
         current_user: User
 ) -> None:
-    """Soft‑delete a group.
+    """
+    Деактивирует (soft delete) группу. Может выполнить только владелец или глобальный админ.
 
-    The operation **deactivates** the group (sets ``is_active=False``) and stores
-    a timestamp in ``deleted_at``. Hard deletion is intentionally avoided to
-    retain historical data for audit and reporting.
-
-    Authorization
-    -------------
-    * **Group owner** – always allowed.
-    * **Platform super‑admin** – allowed when ``current_user.is_admin`` is
-      *True*.
-
-    Parameters
-    ----------
-    db:
-        Async SQLAlchemy session.
-    group:
-        ORM instance to be softly‑deleted.
-    current_user:
-        User attempting the deletion.
-
-    Raises
-    ------
-    fastapi.HTTPException
-        * 403 – When the caller lacks sufficient privileges.
+    :param db: асинхронная сессия SQLAlchemy
+    :param group: объект группы
+    :param current_user: текущий пользователь
+    :raises HTTPException 403: если нет прав на удаление
     """
     if group.owner_id != current_user.id and not current_user.is_admin:
         raise HTTPException(status_code=403, detail="forbidden")
@@ -253,37 +163,16 @@ async def add_user_to_group(
         email: str,
         role: GroupRole = GroupRole.member
 ) -> UserGroup:
-    """Invite a user to a group or promote them directly to a given *role*.
+    """
+    Добавляет пользователя в группу по email.
 
-    Two validation steps are performed before insertion:
-
-    1. The *group* must exist and be active.
-    2. The *user* must exist and be active.
-
-    If the *membership* row already exists, an HTTP 400 is returned so that
-    idempotent clients can detect a duplicate invitation.
-
-    Parameters
-    ----------
-    db:
-        Async SQLAlchemy session.
-    group_id:
-        Identifier of the target group.
-    user_id:
-        Identifier of the user to invite.
-    role:
-        Initial `~app.db.base.GroupRole` value. Defaults to `GroupRole.member`.
-
-    Returns
-    -------
-    UserGroup
-        The freshly persisted membership object.
-
-    Raises
-    ------
-    fastapi.HTTPException
-        * 404 – Group **or** user does not exist / is inactive.
-        * 400 – Membership already present.
+    :param db: асинхронная сессия SQLAlchemy
+    :param group_id: ID группы
+    :param email: email пользователя
+    :param role: роль в группе (по умолчанию участник)
+    :return: объект связи UserGroup
+    :raises HTTPException 404: если группа или пользователь не найдены
+    :raises HTTPException 400: если пользователь уже состоит в группе
     """
     group = await get_group_by_id(db, group_id)
     if not group:
@@ -321,26 +210,14 @@ async def remove_user_from_group(
         user_id: uuid.UUID,
         current_user: User
 ) -> None:
-    """Kick a member out of a group.
+    """
+    Удаляет пользователя из группы, если текущий пользователь — администратор группы.
 
-    Only *group admins* are authorized to perform the removal. Ownership is not
-    required – any admin within the group suffices.
-
-    Parameters
-    ----------
-    db:
-        Active async session.
-    group_id:
-        Group identifier.
-    user_id:
-        The user to be removed.
-    current_user:
-        The user attempting the operation.
-
-    Raises
-    ------
-    fastapi.HTTPException
-        * 403 – Caller is **not** an admin in the specified group.
+    :param db: асинхронная сессия SQLAlchemy
+    :param group_id: UUID группы
+    :param user_id: UUID удаляемого пользователя
+    :param current_user: текущий пользователь (для проверки прав)
+    :raises HTTPException 403: если нет прав
     """
     mem_check = await db.execute(
         select(UserGroup)
@@ -367,34 +244,17 @@ async def change_user_role_in_group(
         new_role: GroupRole,
         current_user: User
 ) -> UserGroup:
-    """Update the **role** of a user inside a group (member ↔ admin).
+    """
+    Изменяет роль пользователя в группе.
 
-    Only current group **admins** may promote/demote other members. The caller
-    cannot change *their own* role to prevent accidental privilege loss.
-
-    Parameters
-    ----------
-    db:
-        Async SQLAlchemy session.
-    group_id:
-        Target group identifier.
-    user_id:
-        User whose role will be changed.
-    new_role:
-        Desired `GroupRole` value.
-    current_user:
-        Authenticated admin performing the action.
-
-    Returns
-    -------
-    UserGroup
-        Updated a membership object after commit.
-
-    Raises
-    ------
-    fastapi.HTTPException
-        * 403 – Caller lacks admin rights in the group.
-        * 404 – Target membership does not exist.
+    :param db: асинхронная сессия SQLAlchemy
+    :param group_id: UUID группы
+    :param user_id: UUID пользователя
+    :param new_role: новая роль (admin/member)
+    :param current_user: текущий пользователь (должен быть администратором)
+    :return: обновлённый объект UserGroup
+    :raises HTTPException 403: если нет прав
+    :raises HTTPException 404: если пользователь не найден в группе
     """
     mem_check = await db.execute(
         select(UserGroup)
@@ -425,19 +285,12 @@ async def list_group_members(
         db: AsyncSession,
         group_id: uuid.UUID
 ) -> Sequence[UserGroup]:
-    """Return **all** membership rows for the specified group.
+    """
+    Возвращает список участников группы.
 
-    Parameters
-    ----------
-    db:
-        Async SQLAlchemy session.
-    group_id:
-        Group identifier.
-
-    Returns
-    -------
-    Sequence[UserGroup]
-        Each `UserGroup` row represents a user and their role.
+    :param db: асинхронная сессия SQLAlchemy
+    :param group_id: UUID группы
+    :return: список объектов UserGroup
     """
     result = await db.execute(
         select(UserGroup).filter(UserGroup.group_id == group_id)
@@ -450,15 +303,13 @@ async def is_user_admin_in_group(
         group_id: uuid.UUID,
         user_id: uuid.UUID
 ) -> bool:
-    """Lightweight helper to check *admin* status.
+    """
+    Проверяет, является ли пользователь администратором группы.
 
-    Uses ``SELECT role`` only (i.e., no join) for minimal overhead. Suitable for
-    **guards** inside higher level services and routers.
-
-    Returns
-    -------
-    bool
-        *True* if the user’s role is `GroupRole.admin`, else *False*.
+    :param db: асинхронная сессия SQLAlchemy
+    :param group_id: UUID группы
+    :param user_id: UUID пользователя
+    :return: True, если пользователь — администратор, иначе False
     """
     result = await db.execute(
         select(UserGroup.role)
@@ -473,14 +324,13 @@ async def is_user_member_in_group(
         group_id: uuid.UUID,
         user_id: uuid.UUID
 ) -> bool:
-    """Check whether the user belongs to the group at **any** role level.
+    """
+    Проверяет, состоит ли пользователь в группе.
 
-    A convenience wrapper around ``SELECT 1 FROM user_groups WHERE … LIMIT 1``.
-
-    Returns
-    -------
-    bool
-        *True* when a row exists, otherwise *False*.
+    :param db: асинхронная сессия SQLAlchemy
+    :param group_id: UUID группы
+    :param user_id: UUID пользователя
+    :return: True, если пользователь состоит в группе, иначе False
     """
     result = await db.execute(
         select(UserGroup)

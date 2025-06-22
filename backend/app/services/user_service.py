@@ -30,26 +30,12 @@ async def create_user(
         db: AsyncSession,
         user: UserCreate
 ) -> User:
-    """Persist a new **active** user with a securely hashed password.
+    """
+    Создаёт нового пользователя с хешированием пароля.
 
-    Parameters
-    ----------
-    db:
-        Live async SQLAlchemy session (usually provided by a FastAPI dependency).
-    user:
-        Pydantic model containing the *email*, *name* and raw *password*
-        supplied by the client at registration time.
-
-    Returns
-    -------
-    User
-        Refreshed ORM instance holding an auto‑generated ``id`` and the
-        *bcrypt*‑hashed password in ``password_hash``.
-
-    Raises
-    ------
-    sqlalchemy.exc.SQLAlchemyError
-        Bubbles up intact if database insertion fails.
+    :param db: асинхронная сессия SQLAlchemy
+    :param user: данные для создания пользователя
+    :return: созданный пользователь
     """
     password_hash = pwd_context.hash(user.password)
     user = User(
@@ -67,20 +53,12 @@ async def get_user_by_email(
         db: AsyncSession,
         email: str | EmailStr
 ) -> User | None:
-    """Return the *active* user whose e‑mail matches ``email``.
+    """
+    Получает активного пользователя по email.
 
-    Parameters
-    ----------
-    db
-        Async session.
-    email
-        E‑mail address to look up (case‑sensitive matching).
-
-    Returns
-    -------
-    User | None
-        The matching ORM instance **or** *None* when no active user exists with
-        that address.
+    :param db: асинхронная сессия SQLAlchemy
+    :param email: email пользователя
+    :return: объект пользователя или None
     """
     result = await db.execute(
         select(User).filter(User.email == email, User.is_active == True)
@@ -92,19 +70,12 @@ async def get_user_by_id(
         db: AsyncSession,
         id: uuid.UUID
 ) -> User | None:
-    """Retrieve an *active* user by primary key.
+    """
+    Получает активного пользователя по ID.
 
-    Parameters
-    ----------
-    db
-        Async session.
-    id
-        UUID primary key.
-
-    Returns
-    -------
-    User | None
-        ORM instance or *None* if user is absent/inactive.
+    :param db: асинхронная сессия SQLAlchemy
+    :param id: UUID пользователя
+    :return: объект пользователя или None
     """
     result = await db.execute(
         select(User).filter(User.id == id, User.is_active == True)
@@ -118,33 +89,16 @@ async def update_user(
         user_in: UserUpdate,
         current_user: User,
 ) -> User:
-    """Patch the user’s *mutable* fields: ``name`` and ``password``.
+    """
+    Обновляет имя и/или пароль пользователя при наличии прав.
 
-    Access Control
-    --------------
-    * The **user himself** may update their profile.
-    * A **platform super‑admin** (``current_user.is_admin``) may update anyone.
-
-    Validation Rules
-    ---------------
-    * ``name`` – must be ≥ *3* non‑whitespace characters (when provided).
-    * ``password`` – at least *8* characters.
-
-    Parameters
-    ----------
-    db, user, user_in, current_user
-        See signature. ``user`` is an already attached ORM instance.
-
-    Returns
-    -------
-    User
-        Refreshed an ORM object after commit (or unchanged if nothing mutated).
-
-    Raises
-    ------
-    fastapi.HTTPException
-        * 403 – Caller lacks rights (delegated to `app.utils.utils.check_rights`).
-        * 422 – Validation failures for *name* or *password*.
+    :param db: асинхронная сессия SQLAlchemy
+    :param user: пользователь, которого нужно обновить
+    :param user_in: данные для обновления
+    :param current_user: текущий пользователь (для проверки прав)
+    :return: обновлённый пользователь
+    :raises HTTPException 403: при отсутствии прав
+    :raises HTTPException 422: если имя/пароль невалидны
     """
     updated = False
 
@@ -176,20 +130,13 @@ async def delete_user(
         user: User,
         current_user: User
 ) -> None:
-    """Soft‑delete a user (``is_active=False`` + tombstone timestamp).
+    """
+    Деактивирует пользователя (soft delete).
 
-    Authorisation matrix mirrors `update_user` – self‑deleting or
-    admin‑initiated deletions are allowed.
-
-    Parameters
-    ----------
-    db, user, current_user
-        See signature.
-
-    Raises
-    ------
-    fastapi.HTTPException
-        * 403 – When neither self‑delete nor admin‑delete conditions are met.
+    :param db: асинхронная сессия SQLAlchemy
+    :param user: пользователь, которого нужно удалить
+    :param current_user: текущий пользователь (для проверки прав)
+    :raises HTTPException 403: при отсутствии прав
     """
     if user.id != current_user.id and not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -205,22 +152,13 @@ async def list_users(
         skip: int = 0,
         limit: int = 100,
 ) -> Sequence[User]:
-    """Return a **paginated** list of *active* users.
+    """
+    Возвращает список активных пользователей с пагинацией.
 
-    Parameters
-    ----------
-    db
-        Async session.
-    skip
-        Offset for result pagination ("page start").
-    limit
-        Maximum number of users to return. Hard cap is delegated to the caller
-        (router/endpoint) – default *100*.
-
-    Returns
-    -------
-    Sequence[User]
-        List‑like collection of ORM instances.
+    :param db: асинхронная сессия SQLAlchemy
+    :param skip: количество пропущенных записей
+    :param limit: максимальное количество возвращаемых записей
+    :return: список пользователей
     """
     result = await db.execute(
         select(User)

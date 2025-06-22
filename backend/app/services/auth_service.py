@@ -5,23 +5,23 @@ from datetime import timedelta
 from typing import Optional
 
 from fastapi import HTTPException, status
+from jose import JWTError, jwt
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
-from jose import JWTError, jwt
 
-from app.schemas.user import UserCreate
-from app.models.user import User
-from app.services.user_service import (
-    create_user as create_user_in_db,
-    get_user_by_email,
-    get_user_by_id,
-)
+from app.core.config import settings
 from app.core.security import (
     verify_password,
     get_password_hash,
     create_access_token,
 )
-from app.core.config import settings
+from app.models.user import User
+from app.schemas.user import UserCreate
+from app.services.user_service import (
+    create_user as create_user_in_db,
+    get_user_by_email,
+    get_user_by_id,
+)
 
 
 async def register_user(db: AsyncSession, user_in: UserCreate) -> User:

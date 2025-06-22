@@ -1,9 +1,9 @@
-import uuid
 import datetime
+import uuid
 
 import sqlalchemy as sa
-from sqlalchemy.types import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import UUID
 
 from app.db.base import Base, intpk, created_at, updated_at
 

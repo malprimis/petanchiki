@@ -1,9 +1,7 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
-from sqlalchemy import DateTime
-from sqlalchemy.orm import mapped_column
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
 from app.db.base import TransactionType
 

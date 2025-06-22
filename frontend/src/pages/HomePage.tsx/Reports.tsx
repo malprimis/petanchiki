@@ -438,7 +438,7 @@ const ReportsPage = () => {
                       dataKey="value"
                       label={renderCustomizedLabel}
                     >
-                      {categoryData.map((entry, index) => (
+                      {categoryData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>

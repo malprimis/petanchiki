@@ -1,0 +1,121 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+
+variables:
+  # Тег для образов по сборке
+  IMAGE_TAG: '$(Build.BuildId)'
+
+stages:
+
+# -----------------------------------
+# 1) Build: собираем образы
+# -----------------------------------
+- stage: Build
+  displayName: '🛠️ Build Docker images'
+  jobs:
+    - job: Build_Images
+      displayName: 'Build backend & frontend images'
+      pool:
+        vmImage: ubuntu-latest
+      steps:
+        - checkout: self
+
+        # Backend image
+        - task: Docker@2
+          displayName: 'Build backend image'
+          inputs:
+            command: build
+            dockerfile: 'backend/Dockerfile'
+            # containerRegistry: '<ваш ACR-сервис-коннекшн>' # если пушите в ACR
+            tags: |
+              backend:$(IMAGE_TAG)
+
+        # Frontend image
+        - task: Docker@2
+          displayName: 'Build frontend image'
+          inputs:
+            command: build
+            dockerfile: 'frontend/Dockerfile'
+            tags: |
+              frontend:$(IMAGE_TAG)
+
+# -----------------------------------
+# 2) Test: запускаем тесты
+# -----------------------------------
+- stage: Test
+  displayName: '🧪 Run tests'
+  dependsOn: Build
+  jobs:
+    - job: Backend_Tests
+      displayName: 'Backend: pytest'
+      pool:
+        vmImage: ubuntu-latest
+      steps:
+        - checkout: self
+        - script: |
+            cd backend
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+            pytest --maxfail=1 --disable-warnings -q
+          displayName: '💻 Install & pytest'
+
+    - job: Frontend_Tests
+      displayName: 'Frontend: npm test'
+      pool:
+        vmImage: ubuntu-latest
+      steps:
+        - checkout: self
+        - script: |
+            cd frontend
+            npm ci
+            npm test -- --watchAll=false --bail
+          displayName: '📦 npm ci & npm test'
+
+# -----------------------------------
+# 3) Deploy to Staging (auto on develop)
+# -----------------------------------
+- stage: Deploy_Staging
+  displayName: '🚀 Deploy to Staging'
+  dependsOn: Test
+  condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'develop'))
+  jobs:
+    - deployment: Staging
+      displayName: 'Deploy to staging environment'
+      environment: 'staging'      # создайте Environment 'staging' в Azure DevOps, можно настроить approvals там
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - script: |
+                  echo "🚀 Deploying to staging server..."
+                  # например, пушим образы в registry и ssh на staging
+                displayName: 'Staging deployment script'
+
+# -----------------------------------
+# 4) Deploy to Production (manual from main)
+# -----------------------------------
+- stage: Deploy_Production
+  displayName: '🛡️ Deploy to Production'
+  dependsOn: Test
+  condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'main'))
+  jobs:
+    - deployment: Production
+      displayName: 'Deploy to production environment'
+      environment: 'production'   # создайте Environment 'production' и настройте здесь manual approval
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - script: |
+                  echo "🛡️ Deploying to production server..."
+                  # аналогично: пушим образы, обновляем сервисы в prod
+                displayName: 'Production deployment script'
